@@ -1,0 +1,23 @@
+[package]
+name = "bevy_water"
+version = "0.8.0"
+edition = "2021"
+authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
+license = "MIT/Apache-2.0"
+description = "Dynamic ocean material for Bevy."
+keywords = ["water", "ocean", "waves", "bevy"]
+repository = "https://github.com/Neopallium/bevy_water"
+homepage = "https://github.com/Neopallium/bevy_water"
+
+[dependencies]
+anyhow = "1.0"
+
+bevy = { version = "0.8", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+
+[dev-dependencies]
+bevy = "0.8"
+bevy_atmosphere = "0.4.0"
+bevy_flycam = "*"
+
+[patch.crates-io]
+bevy_flycam = { git = "https://github.com/Neopallium/bevy_flycam" }

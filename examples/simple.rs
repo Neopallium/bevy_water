@@ -1,0 +1,57 @@
+//! Showcases simple dynamic ocean material.
+
+use bevy::prelude::*;
+
+use bevy_water::*;
+
+const WATER_HEIGHT: f32 = 20.0;
+
+fn main() {
+  App::new()
+    .add_plugins(DefaultPlugins)
+    .insert_resource(WaterSettings {
+      height: WATER_HEIGHT,
+    })
+    .add_plugin(WaterPlugin)
+    .add_startup_system(setup)
+    .run();
+}
+
+/// set up a simple 3D scene
+fn setup(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+  // wall
+  commands.spawn_bundle(PbrBundle {
+    mesh: meshes.add(Mesh::from(shape::Box::new(5.0, 5.0, 0.1))),
+    material: materials.add(Color::rgb(0.5, 0.3, 0.3).into()),
+    transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
+    ..default()
+  });
+  // cube
+  commands.spawn_bundle(PbrBundle {
+    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+    material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+    transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
+    ..default()
+  });
+  // light
+  commands.spawn_bundle(PointLightBundle {
+    transform: Transform::from_xyz(4.0, WATER_HEIGHT + 8.0, 4.0),
+    point_light: PointLight {
+      intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
+      shadows_enabled: true,
+      ..default()
+    },
+    ..default()
+  });
+
+  // camera
+  commands.spawn_bundle(Camera3dBundle {
+    transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
+      .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
+    ..default()
+  });
+}

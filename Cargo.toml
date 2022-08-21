@@ -17,7 +17,7 @@ bevy = { version = "0.8", default-features = false, features = ["bevy_asset", "b
 [dev-dependencies]
 bevy = "0.8"
 bevy_atmosphere = "0.4.0"
-bevy_flycam = "*"
+bevy_flycam = "0.8"
 
 [patch.crates-io]
 bevy_flycam = { git = "https://github.com/Neopallium/bevy_flycam" }

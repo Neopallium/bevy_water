@@ -119,7 +119,7 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   let c = get_wave_height(w_pos + vec2<f32>(1.0, 1.0));
   let normal = normalize(vec3<f32>(height - b, 1.0, height - c));
 
-  let color = vec3<f32>(0.005, 0.03, 0.06);
+  let color = vec3<f32>(0.01, 0.03, 0.05);
   
   // show grid
   //let f_pos = step(fract((w_pos / 17.06274)), vec2<f32>(0.995));

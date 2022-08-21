@@ -7,7 +7,7 @@ Dynamic water material (with waves) for [Bevy](https://bevyengine.org/).
 ```
 cargo run --release --example ocean
 ```
-![](showcase.webm)
+![](showcase.gif)
 
 # Features
 

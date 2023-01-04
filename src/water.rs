@@ -79,7 +79,7 @@ fn setup_water(
           let x = (x * WATER_SIZE) as f32 - offset;
           let y = (y * WATER_SIZE) as f32 - offset;
           // Water material. TODO: re-use?
-          let material = materials.add(WaterMaterial::new());
+          let material = materials.add(WaterMaterial {});
 
           parent.spawn((
             WaterTileBundle::new(mesh.clone(), material, water_height, Vec2::new(x, y)),

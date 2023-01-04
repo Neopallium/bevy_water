@@ -8,7 +8,7 @@ pub const WATER_SIZE: u16 = 256;
 pub const WATER_QUAD_SIZE: u16 = 16;
 pub const WATER_GRID_SIZE: u16 = 6;
 
-#[derive(Clone, Debug)]
+#[derive(Resource, Clone, Debug)]
 pub struct WaterSettings {
   pub height: f32,
 }
@@ -48,7 +48,6 @@ impl WaterTileBundle {
         transform: Transform::from_xyz(offset.x, height, offset.y),
         ..default()
       },
-      ..default()
     }
   }
 }
@@ -69,7 +68,7 @@ fn setup_water(
   ));
 
   commands
-    .spawn_bundle(WaterBundle {
+    .spawn(WaterBundle {
       name: Name::new("Water"),
       ..default()
     })
@@ -82,14 +81,10 @@ fn setup_water(
           // Water material. TODO: re-use?
           let material = materials.add(WaterMaterial::new());
 
-          parent
-            .spawn_bundle(WaterTileBundle::new(
-              mesh.clone(),
-              material,
-              water_height,
-              Vec2::new(x, y),
-            ))
-            .insert(NotShadowCaster);
+          parent.spawn((
+            WaterTileBundle::new(mesh.clone(), material, water_height, Vec2::new(x, y)),
+            NotShadowCaster,
+          ));
         }
       }
     });

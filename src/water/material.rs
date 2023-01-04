@@ -38,7 +38,7 @@ impl Material for WaterMaterial {
 /// Update Water time.
 fn update_water_time(time: Res<Time>, mut materials: ResMut<Assets<WaterMaterial>>) {
   for (_, material) in materials.iter_mut() {
-    material.params.time = time.seconds_since_startup() as f32;
+    material.params.time = time.elapsed_seconds();
   }
 }
 

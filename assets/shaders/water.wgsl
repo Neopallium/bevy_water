@@ -28,10 +28,6 @@ struct VertexOutput {
   @location(4) base_height: f32,
 };
 
-struct WaterParams {
-  time: f32,
-};
-
 struct FragmentInput {
   @builtin(front_facing) is_front: bool,
   @builtin(position) frag_coord: vec4<f32>,
@@ -44,9 +40,6 @@ struct FragmentInput {
   @location(4) base_height: f32,
 };
 
-@group(1) @binding(0)
-var<uniform> params: WaterParams;
-
 #import "shaders/noise/random.wgsl"
 #import "shaders/noise/vnoise.wgsl"
 
@@ -57,8 +50,7 @@ fn noise2(v: vec2<f32>) -> f32 {
 #import "shaders/noise/fbm.wgsl"
 
 fn wave(p: vec2<f32>) -> f32 {
-  let p_time = params.time;
-  let time = p_time * .5 + 23.0;
+  let time = globals.time * .5 + 23.0;
 
   let time_x = time / 1.0;
   let time_y = time / 0.5;
@@ -72,8 +64,7 @@ fn wave(p: vec2<f32>) -> f32 {
 }
 
 fn get_wave_height(p: vec2<f32>) -> f32 {
-  let p_time = params.time;
-  let time = p_time / 2.0;
+  let time = globals.time / 2.0;
   var d = wave((p + time) * 0.4) * 0.3;
   d = d + wave((p - time) * 0.3) * 0.3;
   d = d + wave((p + time) * 0.5) * 0.2;

@@ -35,20 +35,11 @@ impl Material for WaterMaterial {
   }
 }
 
-/// Update Water time.
-fn update_water_time(time: Res<Time>, mut materials: ResMut<Assets<WaterMaterial>>) {
-  for (_, material) in materials.iter_mut() {
-    material.params.time = time.elapsed_seconds();
-  }
-}
-
 #[derive(Default, Clone, Debug)]
 pub struct WaterMaterialPlugin;
 
 impl Plugin for WaterMaterialPlugin {
   fn build(&self, app: &mut App) {
-    app
-      .add_plugin(MaterialPlugin::<WaterMaterial>::default())
-      .add_system(update_water_time);
+    app.add_plugin(MaterialPlugin::<WaterMaterial>::default());
   }
 }

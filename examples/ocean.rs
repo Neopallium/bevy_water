@@ -25,7 +25,10 @@ fn main() {
       ..default()
     }))
     // Atmosphere + daylight cycle.
-    .insert_resource(AtmosphereModel::default())
+    .insert_resource(AtmosphereModel::new(Nishita {
+      sun_position: Vec3::new(0.0, 1.0, 1.0),
+      ..default()
+    }))
     .add_plugin(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
       // Update our atmosphere every 50ms (in a real game, this would be much slower, but for the sake of an example we use a faster update)

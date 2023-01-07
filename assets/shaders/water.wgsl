@@ -28,10 +28,6 @@ struct VertexOutput {
   @location(4) base_height: f32,
 };
 
-struct WaterParams {
-  time: f32,
-};
-
 struct FragmentInput {
   @builtin(front_facing) is_front: bool,
   @builtin(position) frag_coord: vec4<f32>,
@@ -44,9 +40,6 @@ struct FragmentInput {
   @location(4) base_height: f32,
 };
 
-@group(1) @binding(0)
-var<uniform> params: WaterParams;
-
 #import "shaders/noise/random.wgsl"
 #import "shaders/noise/vnoise.wgsl"
 
@@ -57,8 +50,7 @@ fn noise2(v: vec2<f32>) -> f32 {
 #import "shaders/noise/fbm.wgsl"
 
 fn wave(p: vec2<f32>) -> f32 {
-  let p_time = params.time;
-  let time = p_time * .5 + 23.0;
+  let time = globals.time * .5 + 23.0;
 
   let time_x = time / 1.0;
   let time_y = time / 0.5;
@@ -72,8 +64,7 @@ fn wave(p: vec2<f32>) -> f32 {
 }
 
 fn get_wave_height(p: vec2<f32>) -> f32 {
-  let p_time = params.time;
-  let time = p_time / 2.0;
+  let time = globals.time / 2.0;
   var d = wave((p + time) * 0.4) * 0.3;
   d = d + wave((p - time) * 0.3) * 0.3;
   d = d + wave((p + time) * 0.5) * 0.2;
@@ -148,8 +139,8 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
 
   pbr_input.is_orthographic = view.projection[3].w == 1.0;
 
-  pbr_input.N = prepare_normal(
-    0u,
+  pbr_input.N = apply_normal_mapping(
+    pbr_input.material.flags,
     normal,
 #ifdef VERTEX_TANGENTS
 #ifdef STANDARDMATERIAL_NORMAL_MAP
@@ -159,7 +150,7 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
 #ifdef VERTEX_UVS
     in.uv,
 #endif
-    in.is_front,
+    //in.is_front,
   );
   pbr_input.V = calculate_view(in.world_position, pbr_input.is_orthographic);
 

@@ -4,7 +4,7 @@
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::time::Stopwatch;
 use bevy::utils::Duration;
-use bevy::{app::AppExit, asset::AssetServerSettings, prelude::*};
+use bevy::{app::AppExit, prelude::*};
 
 use bevy_atmosphere::prelude::*;
 use bevy_flycam::{FlyCam, MovementSettings, NoCameraPlayerPlugin};
@@ -20,22 +20,21 @@ fn main() {
   App::new()
     .insert_resource(Msaa { samples: 4 })
     // Tell the asset server to watch for asset changes on disk:
-    .insert_resource(AssetServerSettings {
+    .add_plugins(DefaultPlugins.set(AssetPlugin {
       watch_for_changes: true,
       ..default()
-    })
-    .add_plugins(DefaultPlugins)
+    }))
     // Atmosphere + daylight cycle.
-    .insert_resource(Atmosphere {
+    .insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
-    })
+    }))
+    .add_plugin(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
       // Update our atmosphere every 50ms (in a real game, this would be much slower, but for the sake of an example we use a faster update)
       Duration::from_millis(50),
       0.6,
     ))
-    .add_plugin(AtmospherePlugin)
     .add_system(timer_control)
     .add_system(daylight_cycle)
     // Camera
@@ -65,7 +64,7 @@ fn handle_quit(input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
   }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Resource, Clone, Debug, Default)]
 struct UiState {
   show_wireframe: bool,
 }
@@ -97,6 +96,7 @@ fn toggle_wireframe(
 struct Sun;
 
 // Timer for updating the daylight cycle (updating the atmosphere every frame is slow, so it's better to do incremental changes)
+#[derive(Resource)]
 struct CycleTimer {
   update: Timer,
   time: Stopwatch,
@@ -106,7 +106,7 @@ struct CycleTimer {
 impl CycleTimer {
   pub fn new(duration: Duration, speed: f32) -> Self {
     Self {
-      update: Timer::new(duration, true),
+      update: Timer::new(duration, TimerMode::Repeating),
       time: Stopwatch::new(),
       speed,
     }
@@ -166,7 +166,7 @@ fn timer_control(input: Res<Input<KeyCode>>, mut timer: ResMut<CycleTimer>) {
 
 // We can edit the Atmosphere resource and it will be updated automatically
 fn daylight_cycle(
-  mut atmosphere: ResMut<Atmosphere>,
+  mut atmosphere: AtmosphereMut<Nishita>,
   mut query: Query<(&mut Transform, &mut DirectionalLight), With<Sun>>,
   mut timer: ResMut<CycleTimer>,
   time: Res<Time>,
@@ -199,14 +199,14 @@ fn setup(
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // wall
-  commands.spawn_bundle(PbrBundle {
+  commands.spawn(PbrBundle {
     mesh: meshes.add(Mesh::from(shape::Box::new(5.0, 5.0, 0.1))),
     material: materials.add(Color::rgb(0.5, 0.3, 0.3).into()),
     transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
     ..default()
   });
   // cube
-  commands.spawn_bundle(PbrBundle {
+  commands.spawn(PbrBundle {
     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
     material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
     transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
@@ -215,7 +215,7 @@ fn setup(
 
   // "Sun"
   commands
-    .spawn_bundle(DirectionalLightBundle {
+    .spawn(DirectionalLightBundle {
       directional_light: DirectionalLight {
         shadows_enabled: true,
         ..default()
@@ -225,14 +225,15 @@ fn setup(
     .insert(Sun); // Marks the light as Sun
 
   // camera
-  commands
-    .spawn_bundle(Camera3dBundle {
+  commands.spawn((
+    Camera3dBundle {
       transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
         .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
-    })
-    .insert(AtmosphereCamera(None))
-    .insert(FlyCam);
+    },
+    AtmosphereCamera::default(),
+    FlyCam,
+  ));
 
   info!("Move camera around by using WASD for lateral movement");
   info!("Use Left Shift and Spacebar for vertical movement");

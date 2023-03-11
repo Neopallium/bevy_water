@@ -26,5 +26,6 @@ cargo run --release --example ocean
 
 # Versions
 
+- Bevy 0.10: `bevy_water = "0.10"`
 - Bevy 0.9: `bevy_water = "0.9"`
 - Bevy 0.8: `bevy_water = "0.8"`

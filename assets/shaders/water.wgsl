@@ -5,7 +5,9 @@
 #import bevy_pbr::utils
 #import bevy_pbr::clustered_forward
 #import bevy_pbr::lighting
+#import bevy_pbr::pbr_ambient
 #import bevy_pbr::shadows
+#import bevy_pbr::fog
 #import bevy_pbr::pbr_functions
 
 struct Vertex {
@@ -117,11 +119,13 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   //let grid = step(f_pos.x + f_pos.y, 1.00);
   //let color = color + vec3<f32>(grid);
 
+	var output_color: vec4<f32> = vec4<f32>(color.xyz, 0.97);
+
   // Prepare a 'processed' StandardMaterial by sampling all textures to resolve
   // the material members
   var pbr_input = pbr_input_new();
 
-  pbr_input.material.base_color = vec4<f32>(color.xyz, 0.97);
+  pbr_input.material.base_color = output_color;
   pbr_input.material.reflectance = 0.5;
   pbr_input.material.flags = STANDARD_MATERIAL_FLAGS_ALPHA_MODE_BLEND;
 
@@ -131,18 +135,15 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   pbr_input.material.metallic = 0.0;
   pbr_input.material.perceptual_roughness = 0.22;
 
-  pbr_input.occlusion = 1.0;
-
   pbr_input.frag_coord = in.frag_coord;
   pbr_input.world_position = in.world_position;
-
-  pbr_input.is_orthographic = view.projection[3].w == 1.0;
-
 	pbr_input.world_normal = prepare_world_normal(
       normal,
       (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT) != 0u,
       in.is_front,
   );
+
+  pbr_input.is_orthographic = view.projection[3].w == 1.0;
 
   pbr_input.N = apply_normal_mapping(
     pbr_input.material.flags,
@@ -155,6 +156,14 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     in.uv,
   );
   pbr_input.V = calculate_view(in.world_position, pbr_input.is_orthographic);
+  pbr_input.occlusion = 1.0;
 
-  return tone_mapping(pbr(pbr_input));
+  output_color = pbr(pbr_input);
+
+	// fog
+	if (fog.mode != FOG_MODE_OFF && (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_FOG_ENABLED_BIT) != 0u) {
+		output_color = apply_fog(output_color, in.world_position.xyz, view.world_position.xyz);
+	}
+
+  return tone_mapping(output_color);
 }

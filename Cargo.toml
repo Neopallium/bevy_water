@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT/Apache-2.0"
@@ -12,9 +12,9 @@ homepage = "https://github.com/Neopallium/bevy_water"
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.9.1", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.10", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
-bevy = "0.9.1"
-bevy_atmosphere = "0.5.0"
-bevy_flycam = "0.9.0"
+bevy = "0.10"
+bevy_atmosphere = { version = "0.5.0", path = "../bevy/bevy_atmosphere/" }
+bevy_flycam = { version = "0.10.0", path = "../bevy/bevy_flycam/" }

@@ -18,7 +18,7 @@ const SPEED_MAX: f32 = 1.0;
 
 fn main() {
   App::new()
-    .insert_resource(Msaa { samples: 4 })
+    .insert_resource(Msaa::Sample4)
     // Tell the asset server to watch for asset changes on disk:
     .add_plugins(DefaultPlugins.set(AssetPlugin {
       watch_for_changes: true,

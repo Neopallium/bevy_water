@@ -7,7 +7,7 @@ use bevy::utils::Duration;
 use bevy::{app::AppExit, prelude::*};
 
 use bevy_atmosphere::prelude::*;
-use bevy_flycam::{FlyCam, MovementSettings, NoCameraPlayerPlugin};
+use bevy_spectator::*;
 
 use bevy_water::*;
 
@@ -29,6 +29,7 @@ fn main() {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
+    .add_plugin(SpectatorPlugin) // Simple movement for this example
     .add_plugin(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
       // Update our atmosphere every 50ms (in a real game, this would be much slower, but for the sake of an example we use a faster update)
@@ -37,12 +38,6 @@ fn main() {
     ))
     .add_system(timer_control)
     .add_system(daylight_cycle)
-    // Camera
-    .add_plugin(NoCameraPlayerPlugin)
-    .insert_resource(MovementSettings {
-      sensitivity: 0.00015, // default: 0.00012
-      speed: 12.0,          // default: 12.0
-    })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -232,7 +227,7 @@ fn setup(
       ..default()
     },
     AtmosphereCamera::default(),
-    FlyCam,
+    Spectator,
   ));
 
   info!("Move camera around by using WASD for lateral movement");

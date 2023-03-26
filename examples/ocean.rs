@@ -9,40 +9,58 @@ use bevy::{app::AppExit, prelude::*};
 use bevy_atmosphere::prelude::*;
 use bevy_spectator::*;
 
+#[cfg(feature = "debug")]
+use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
+
 use bevy_water::*;
 
-const WATER_HEIGHT: f32 = 20.0;
+const WATER_HEIGHT: f32 = 1.0;
 const SPEED_MIN: f32 = 0.05;
 const SPEED_DELTA: f32 = 0.01;
 const SPEED_MAX: f32 = 1.0;
 
 fn main() {
-  App::new()
-    .insert_resource(Msaa::Sample4)
+  let mut app = App::new();
+  app
     // Tell the asset server to watch for asset changes on disk:
-    .add_plugins(DefaultPlugins.set(AssetPlugin {
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+          title: "Pirates".to_string(),
+          resolution: (1200., 600.).into(),
+          ..Default::default()
+        }),
+        ..default()
+      }).set(AssetPlugin {
       watch_for_changes: true,
       ..default()
-    }))
+    }));
+
+  #[cfg(feature = "debug")]
+  app.add_plugin(DebugLinesPlugin::with_depth_test(true))
+    .add_plugin(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+
     // Atmosphere + daylight cycle.
-    .insert_resource(AtmosphereModel::new(Nishita {
+  app.insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
     .add_plugin(SpectatorPlugin) // Simple movement for this example
     .add_plugin(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
-      // Update our atmosphere every 50ms (in a real game, this would be much slower, but for the sake of an example we use a faster update)
-      Duration::from_millis(50),
-      0.6,
+      Duration::from_millis(1000),
+      0.2,
     ))
     .add_system(timer_control)
     .add_system(daylight_cycle)
+    // Improve shadows.
+    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
     })
     .add_plugin(WaterPlugin)
+    // Ship Physics.
+    .add_system(update_ships)
     // Setup
     .add_startup_system(setup)
     .add_system(handle_quit)
@@ -175,7 +193,7 @@ fn daylight_cycle(
 
   if timer.update() {
     let mut pos = atmosphere.sun_position;
-    let t = timer.time();
+    let t = (timer.time() + 3.0) * 0.1;
     pos.y = t.sin();
     pos.z = t.cos();
     atmosphere.sun_position = pos;
@@ -187,27 +205,85 @@ fn daylight_cycle(
   }
 }
 
+#[derive(Bundle, Default)]
+struct ShipBundle {
+  ship: Ship,
+  name: Name,
+  #[bundle]
+  scene: SceneBundle,
+}
+
+#[derive(Component, Default, Clone)]
+struct Ship {
+  water_line: f32,
+  front: Vec3,
+  back_left: Vec3,
+  back_right: Vec3,
+}
+
+impl Ship {
+  fn new(water_line: f32, front: f32, back: f32, left: f32, right: f32) -> Self {
+    Self {
+      water_line,
+      front: Vec3::new(0.0, 0.0, front),
+      back_left: Vec3::new(left, 0.0, back),
+      back_right: Vec3::new(right, 0.0, back),
+    }
+  }
+
+  fn update(&self,
+    time: f32,
+    pos: Vec3,
+    transform: &mut Transform,
+    #[cfg(feature = "debug")]
+    lines: &mut DebugLines
+  ) {
+    let (yaw, _pitch, _roll) = transform.rotation.to_euler(EulerRot::YXZ);
+    let global = Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(yaw));
+
+    // Get the wave position at the front, back_left and back_right.
+    let mut front = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.front));
+    let left = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.back_left));
+    let right = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.back_right));
+    let normal = (left - front).cross(right - front).normalize();
+
+    // Debug lines.
+    #[cfg(feature = "debug")]
+    {
+      lines.line(front, front + normal, 0.0);
+      lines.line_colored(front, right, 0.0, Color::RED);
+      lines.line(right, left, 0.0);
+      lines.line_colored(left, front, 0.0, Color::GREEN);
+    }
+
+    front.y += self.water_line - 0.2;
+    transform.look_at(front, normal);
+
+    transform.translation.y = ((front.y + left.y + right.y) / 3.0) + self.water_line;
+  }
+}
+
+fn update_ships(
+  time: Res<Time>,
+  mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
+  #[cfg(feature = "debug")]
+  mut lines: ResMut<DebugLines>
+) {
+  let time = time.elapsed_seconds_wrapped();
+  for (ship, mut transform, global) in ships.iter_mut() {
+    let pos = global.translation();
+    #[cfg(not(feature = "debug"))]
+    ship.update(time, pos, &mut transform);
+    #[cfg(feature = "debug")]
+    ship.update(time, pos, &mut transform, &mut lines);
+  }
+}
+
 /// set up a simple 3D scene
 fn setup(
   mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
+  asset_server: Res<AssetServer>,
 ) {
-  // wall
-  commands.spawn(PbrBundle {
-    mesh: meshes.add(Mesh::from(shape::Box::new(5.0, 5.0, 0.1))),
-    material: materials.add(Color::rgb(0.5, 0.3, 0.3).into()),
-    transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
-    ..default()
-  });
-  // cube
-  commands.spawn(PbrBundle {
-    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-    material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-    transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
-    ..default()
-  });
-
   // "Sun"
   commands
     .spawn(DirectionalLightBundle {
@@ -222,13 +298,34 @@ fn setup(
   // camera
   commands.spawn((
     Camera3dBundle {
-      transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
-        .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
+      transform: Transform::from_xyz(25.0, WATER_HEIGHT + 5.0, -61.0)
+        .looking_at(Vec3::new(11.0, WATER_HEIGHT, 18.0), Vec3::Y),
       ..default()
     },
     AtmosphereCamera::default(),
     Spectator,
   ));
+
+  // Spawn ships.
+  let scene = asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0");
+  let ship = Ship::new(-0.400, -3.8, 2.5, -1.4, 1.4);
+
+  // "Randomly" place the ships.
+  for x in 1..18 {
+    let f = (x as f32) * 1.20;
+    let f2 = ((x % 6) as f32) * -10.90;
+    commands.spawn(ShipBundle {
+      ship: ship.clone(),
+      name: Name::new(format!("Ship {x}")),
+      scene: SceneBundle {
+        scene: scene.clone(),
+        transform: Transform::from_xyz(-20.0 + (f * 7.8), 0.0, 20.0 + f2)
+          .with_rotation(Quat::from_rotation_y(f)),
+        ..default()
+      },
+      ..default()
+    });
+  }
 
   info!("Move camera around by using WASD for lateral movement");
   info!("Use Left Shift and Spacebar for vertical movement");

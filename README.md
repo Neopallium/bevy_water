@@ -4,14 +4,19 @@ Dynamic water material (with waves) for [Bevy](https://bevyengine.org/).
 
 # Example
 
+A fleet of pirate ships moving with the waves.
+
 ```
 cargo run --release --example ocean
 ```
-![](showcase.gif)
+![](showcase.webp)
+
+[Pirate ship from asset pack CC0](https://www.kenney.nl/assets/pirate-kit)
 
 # Features
 
 - Moving 3d waves (vertex height offset).
+- Get the wave height using `get_wave_point` to dynamically move objects based on the water height.
 - Tileable - allows for adding/removing tiles of water for endless ocean.
 - Normals calculated based on wave height for lighting.
 - Imports `bevy_pbr::*` shader for lighting/shadow support.

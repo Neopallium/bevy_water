@@ -56,7 +56,6 @@ fn wave(p: vec2<f32>) -> f32 {
 
   let time_x = time / 1.0;
   let time_y = time / 0.5;
-  let time_uv = vec2<f32>(time_x, time_y) / 16.0;
   let wave_len_x = 5.0;
   let wave_len_y = 2.0;
   let wave_x = cos(p.x / wave_len_x + time_x);
@@ -82,7 +81,6 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 
   // Add the wave height to the world position.
   let height = get_wave_height(world_position.xz);
-  //let height = get_wave_height(vertex.pos.xz);
   world_position = world_position + vec4<f32>(0., height, 0., 0.);
 
   var out: VertexOutput;

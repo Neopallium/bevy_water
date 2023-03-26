@@ -21,16 +21,16 @@ impl Default for WaterSettings {
 
 #[derive(Bundle, Default)]
 pub struct WaterBundle {
-  name: Name,
+  pub name: Name,
   #[bundle]
-  spatial: SpatialBundle,
+  pub spatial: SpatialBundle,
 }
 
 #[derive(Bundle, Default)]
 pub struct WaterTileBundle {
-  name: Name,
+  pub name: Name,
   #[bundle]
-  mesh: MaterialMeshBundle<WaterMaterial>,
+  pub mesh: MaterialMeshBundle<WaterMaterial>,
 }
 
 impl WaterTileBundle {

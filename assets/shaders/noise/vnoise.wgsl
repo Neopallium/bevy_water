@@ -1,3 +1,5 @@
+#define_import_path bevy_water::noise::vnoise
+
 fn vnoise2d(v: vec2<f32>) -> f32 {
 	let i = floor(v);
 	let f = fract(v);

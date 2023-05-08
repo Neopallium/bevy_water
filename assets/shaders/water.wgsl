@@ -42,14 +42,14 @@ struct FragmentInput {
   @location(4) base_height: f32,
 };
 
-#import "shaders/noise/random.wgsl"
-#import "shaders/noise/vnoise.wgsl"
+#import bevy_water::noise::random
+#import bevy_water::noise::vnoise
 
 fn noise2(v: vec2<f32>) -> f32 {
   return vnoise2d(v);
 }
 
-#import "shaders/noise/fbm.wgsl"
+#import bevy_water::noise::fbm
 
 fn wave(p: vec2<f32>) -> f32 {
   let time = globals.time * .5 + 23.0;

@@ -10,6 +10,11 @@ repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
 [features]
+default = ["embed_shaders"]
+
+# Embed the shaders at compile-time.
+embed_shaders = []
+
 # Enable debug lines in examples.
 debug = []
 

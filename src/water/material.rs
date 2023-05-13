@@ -2,7 +2,10 @@ use bevy::{asset::load_internal_asset, prelude::*, reflect::TypeUuid, render::re
 
 #[derive(AsBindGroup, Clone, Default, TypeUuid)]
 #[uuid = "ea9ad5fe-a9ce-4ff1-aea8-d756ed456c46"]
-pub struct WaterMaterial {}
+pub struct WaterMaterial {
+  #[uniform(0)]
+  pub wave_height: f32,
+}
 
 pub const NOISE_FBM_SHADER_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x47c86614dedb33fe);

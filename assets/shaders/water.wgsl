@@ -10,6 +10,13 @@
 #import bevy_pbr::fog
 #import bevy_pbr::pbr_functions
 
+struct WaterMaterial {
+  wave_height: f32,
+};
+
+@group(1) @binding(0)
+var<uniform> water_material: WaterMaterial;
+
 struct Vertex {
   @location(0) pos: vec3<f32>,
   @location(1) normal: vec3<f32>,
@@ -70,7 +77,7 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
   d = d + wave((p - time) * 0.3) * 0.3;
   d = d + wave((p + time) * 0.5) * 0.2;
   d = d + wave((p - time) * 0.6) * 0.2;
-  return d;
+  return water_material.wave_height * d;
 }
 
 @vertex

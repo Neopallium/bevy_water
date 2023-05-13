@@ -11,6 +11,7 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
+      ..default()
     })
     .add_plugin(WaterPlugin)
     .add_startup_system(setup)

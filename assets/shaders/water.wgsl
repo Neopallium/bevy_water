@@ -27,7 +27,7 @@ struct VertexOutput {
 #ifdef VERTEX_TANGENTS
   @location(3) world_tangent: vec4<f32>,
 #endif
-  @location(4) base_height: f32,
+  @location(4) height: f32,
 };
 
 struct FragmentInput {
@@ -39,7 +39,7 @@ struct FragmentInput {
 #ifdef VERTEX_TANGENTS
   @location(3) world_tangent: vec4<f32>,
 #endif
-  @location(4) base_height: f32,
+  @location(4) height: f32,
 };
 
 #import bevy_water::noise::random
@@ -77,14 +77,12 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
 fn vertex(vertex: Vertex) -> VertexOutput {
   // Need the world position when calculating wave height.
   var world_position = mesh.model * vec4<f32>(vertex.pos, 1.0);
-  let base_height = world_position.y;
 
   // Add the wave height to the world position.
   let height = get_wave_height(world_position.xz);
-  world_position = world_position + vec4<f32>(0., height, 0., 0.);
 
   var out: VertexOutput;
-  out.world_position = world_position;
+  out.world_position = world_position + vec4<f32>(0., height, 0., 0.);
 #ifdef VERTEX_TANGENTS
   out.world_tangent = vec4<f32>(
     mat3x3<f32>(
@@ -97,14 +95,14 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 #endif
   out.frag_coord = view.view_proj * out.world_position;
   out.uv = vertex.uv;
-  out.base_height = base_height;
+  out.height = height;
   return out;
 }
 
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   let w_pos = in.world_position.xz;
-  let height = in.world_position.y - in.base_height;
+  let height = in.height;
   // Calculate normal.
   let height_dx = get_wave_height(w_pos + vec2<f32>(1.0, 0.0));
   let height_dz = get_wave_height(w_pos + vec2<f32>(0.0, 1.0));

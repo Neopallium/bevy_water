@@ -231,8 +231,9 @@ impl Ship {
     }
   }
 
-  fn update(&self,
-    time: f32,
+  fn update(
+    &self,
+    water: &WaterParam,
     pos: Vec3,
     transform: &mut Transform,
     #[cfg(feature = "debug")]
@@ -242,9 +243,9 @@ impl Ship {
     let global = Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(yaw));
 
     // Get the wave position at the front, back_left and back_right.
-    let mut front = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.front));
-    let left = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.back_left));
-    let right = get_wave_point(time, WATER_HEIGHT, global.transform_point(self.back_right));
+    let mut front = water.wave_point(global.transform_point(self.front));
+    let left = water.wave_point(global.transform_point(self.back_left));
+    let right = water.wave_point(global.transform_point(self.back_right));
     let normal = (left - front).cross(right - front).normalize();
 
     // Debug lines.
@@ -264,18 +265,17 @@ impl Ship {
 }
 
 fn update_ships(
-  time: Res<Time>,
+  water: WaterParam,
   mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
   #[cfg(feature = "debug")]
   mut lines: ResMut<DebugLines>
 ) {
-  let time = time.elapsed_seconds_wrapped();
   for (ship, mut transform, global) in ships.iter_mut() {
     let pos = global.translation();
     #[cfg(not(feature = "debug"))]
-    ship.update(time, pos, &mut transform);
+    ship.update(&water, pos, &mut transform);
     #[cfg(feature = "debug")]
-    ship.update(time, pos, &mut transform, &mut lines);
+    ship.update(&water, pos, &mut transform, &mut lines);
   }
 }
 

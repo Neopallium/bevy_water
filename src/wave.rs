@@ -82,7 +82,7 @@ fn wave(g_time: f32, p: Vec2) -> f32 {
   return wave_y + n;
 }
 
-fn get_wave_height_2d(g_time: f32, p: Vec2) -> f32 {
+pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2) -> f32 {
   let time = g_time / 2.0;
   let mut d = wave(g_time, (p + time) * 0.4) * 0.3;
   d = d + wave(g_time, (p - time) * 0.3) * 0.3;

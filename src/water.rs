@@ -12,14 +12,14 @@ pub const WATER_GRID_SIZE: u16 = 6;
 #[reflect(Resource)]
 pub struct WaterSettings {
   pub height: f32,
-  pub wave_height: f32,
+  pub amplitude: f32,
 }
 
 impl Default for WaterSettings {
   fn default() -> Self {
     Self {
       height: 1.0,
-      wave_height: 1.0,
+      amplitude: 1.0,
     }
   }
 }
@@ -85,7 +85,7 @@ fn setup_water(
           let y = (y * WATER_SIZE) as f32 - offset;
           // Water material. TODO: re-use?
           let material = materials.add(WaterMaterial {
-            wave_height: settings.wave_height,
+            amplitude: settings.amplitude,
           });
 
           parent.spawn((
@@ -99,7 +99,7 @@ fn setup_water(
 
 fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<WaterMaterial>>) {
   for (_, mat) in materials.iter_mut() {
-    mat.wave_height = settings.wave_height;
+    mat.amplitude = settings.amplitude;
   }
 }
 

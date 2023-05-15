@@ -4,7 +4,7 @@ use bevy::{asset::load_internal_asset, prelude::*, reflect::TypeUuid, render::re
 #[uuid = "ea9ad5fe-a9ce-4ff1-aea8-d756ed456c46"]
 pub struct WaterMaterial {
   #[uniform(0)]
-  pub wave_height: f32,
+  pub amplitude: f32,
 }
 
 pub const NOISE_FBM_SHADER_HANDLE: HandleUntyped =
@@ -59,14 +59,20 @@ impl Plugin for WaterMaterialPlugin {
     load_internal_asset!(
       app,
       NOISE_RANDOM_SHADER_HANDLE,
-      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/noise/random.wgsl"),
+      concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/assets/shaders/noise/random.wgsl"
+      ),
       Shader::from_wgsl
     );
 
     load_internal_asset!(
       app,
       NOISE_VNOISE_SHADER_HANDLE,
-      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/noise/vnoise.wgsl"),
+      concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/assets/shaders/noise/vnoise.wgsl"
+      ),
       Shader::from_wgsl
     );
 

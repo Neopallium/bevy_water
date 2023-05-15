@@ -12,7 +12,7 @@
 #import bevy_pbr::pbr_functions
 
 struct WaterMaterial {
-  wave_height: f32,
+  amplitude: f32,
 };
 
 @group(1) @binding(0)
@@ -68,7 +68,7 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
   d = d + wave((p - time) * 0.3) * 0.3;
   d = d + wave((p + time) * 0.5) * 0.2;
   d = d + wave((p - time) * 0.6) * 0.2;
-  return water_material.wave_height * d;
+  return water_material.amplitude * d;
 }
 
 @vertex

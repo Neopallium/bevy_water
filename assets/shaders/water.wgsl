@@ -129,13 +129,11 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var pbr_input = pbr_input_new();
 
   pbr_input.material.base_color = output_color;
-  pbr_input.material.reflectance = 0.5;
   pbr_input.material.flags = STANDARD_MATERIAL_FLAGS_ALPHA_MODE_BLEND;
 
   // TODO use .a for exposure compensation in HDR
-  pbr_input.material.emissive = vec4<f32>(0.,0.,0.,1.);
+  // pbr_input.material.emissive = vec4<f32>(0.,0.,0.,1.);
 
-  pbr_input.material.metallic = 0.0;
   pbr_input.material.perceptual_roughness = 0.22;
 
   pbr_input.frag_coord = in.frag_coord;
@@ -159,7 +157,6 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     in.uv,
   );
   pbr_input.V = calculate_view(in.world_position, pbr_input.is_orthographic);
-  pbr_input.occlusion = 1.0;
 
 	pbr_input.flags = mesh.flags;
 

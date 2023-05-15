@@ -1,6 +1,7 @@
 #import bevy_pbr::mesh_view_bindings
 #import bevy_pbr::pbr_bindings
 #import bevy_pbr::mesh_bindings
+#import bevy_pbr::mesh_functions
 
 #import bevy_pbr::utils
 #import bevy_pbr::clustered_forward
@@ -73,7 +74,7 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
   // Need the world position when calculating wave height.
-  var world_position = mesh.model * vec4<f32>(vertex.pos, 1.0);
+  var world_position = mesh_position_local_to_world(mesh.model, vec4<f32>(vertex.pos, 1.0));
 
   // Add the wave height to the world position.
   let height = get_wave_height(world_position.xz);
@@ -81,16 +82,9 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   var out: VertexOutput;
   out.world_position = world_position + vec4<f32>(0., height, 0., 0.);
 #ifdef VERTEX_TANGENTS
-  out.world_tangent = vec4<f32>(
-    mat3x3<f32>(
-      mesh.model[0].xyz,
-      mesh.model[1].xyz,
-      mesh.model[2].xyz
-    ) * vertex.tangent.xyz,
-    vertex.tangent.w
-  );
+  out.world_tangent = mesh_tangent_local_to_world(mesh.model, vertex.tangent);
 #endif
-  out.frag_coord = view.view_proj * out.world_position;
+  out.frag_coord = mesh_position_world_to_clip(out.world_position);
   out.uv = vertex.uv;
   out.height = height;
   return out;

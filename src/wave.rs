@@ -95,9 +95,10 @@ pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2) -> f32 {
 ///
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.
 /// `base_height` - The base height from `WaterSettings`.
+/// `wave_height` - The amplitude of the wave.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_height(time: f32, base_height: f32, pos: Vec3) -> f32 {
-  get_wave_height_2d(time, Vec2::new(pos.x, pos.z)) + base_height
+pub fn get_wave_height(time: f32, base_height: f32, wave_height: f32, pos: Vec3) -> f32 {
+  get_wave_height_2d(time, Vec2::new(pos.x, pos.z)) * wave_height + base_height
 }
 
 /// Calculate wave height at global position `pos` and return a point
@@ -105,8 +106,9 @@ pub fn get_wave_height(time: f32, base_height: f32, pos: Vec3) -> f32 {
 ///
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.
 /// `base_height` - The base height from `WaterSettings`.
+/// `wave_height` - The amplitude of the wave.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_point(time: f32, base_height: f32, mut pos: Vec3) -> Vec3 {
-  pos.y = get_wave_height_2d(time, Vec2::new(pos.x, pos.z)) + base_height;
+pub fn get_wave_point(time: f32, base_height: f32, wave_height: f32, mut pos: Vec3) -> Vec3 {
+  pos.y = get_wave_height(time, base_height, wave_height, pos);
   pos
 }

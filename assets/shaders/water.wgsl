@@ -28,25 +28,15 @@ struct Vertex {
 
 struct VertexOutput {
   @builtin(position) frag_coord: vec4<f32>,
-  @location(0) world_position: vec4<f32>,
-  @location(1) world_normal: vec3<f32>,
-  @location(2) uv: vec2<f32>,
-#ifdef VERTEX_TANGENTS
-  @location(3) world_tangent: vec4<f32>,
-#endif
-  @location(4) height: f32,
+  #import bevy_pbr::mesh_vertex_output
+  @location(5) height: f32,
 };
 
 struct FragmentInput {
   @builtin(front_facing) is_front: bool,
   @builtin(position) frag_coord: vec4<f32>,
-  @location(0) world_position: vec4<f32>,
-  @location(1) world_normal: vec3<f32>,
-  @location(2) uv: vec2<f32>,
-#ifdef VERTEX_TANGENTS
-  @location(3) world_tangent: vec4<f32>,
-#endif
-  @location(4) height: f32,
+  #import bevy_pbr::mesh_vertex_output
+  @location(5) height: f32,
 };
 
 #import bevy_water::noise::random

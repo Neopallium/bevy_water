@@ -5,7 +5,6 @@ pub mod material;
 use material::*;
 
 pub const WATER_SIZE: u16 = 256;
-pub const WATER_QUAD_SIZE: u16 = 16;
 pub const WATER_GRID_SIZE: u16 = 6;
 
 #[derive(Resource, Clone, Debug)]
@@ -61,11 +60,13 @@ fn setup_water(
 ) {
   let water_height = settings.height;
   // Generate mesh for water.
-  let mesh = meshes.add(crate::generate::grid_mesh(
-    WATER_SIZE / WATER_QUAD_SIZE,
-    WATER_QUAD_SIZE as f32,
-    1.0,
-  ));
+  let mesh: Handle<Mesh> = meshes.add(
+    shape::Plane {
+      size: WATER_SIZE as f32,
+      subdivisions: WATER_SIZE as u32 - 1,
+    }
+    .into(),
+  );
 
   commands
     .spawn(WaterBundle {

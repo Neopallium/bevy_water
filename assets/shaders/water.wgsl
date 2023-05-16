@@ -92,10 +92,11 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var world_position: vec4<f32> = in.world_position;
   let w_pos = world_position.xz;
   // Calculate normal.
+  let delta = 0.2;
   let height = get_wave_height(w_pos);
-  let height_dx = get_wave_height(w_pos + vec2<f32>(1.0, 0.0));
-  let height_dz = get_wave_height(w_pos + vec2<f32>(0.0, 1.0));
-  let normal = normalize(vec3<f32>(height - height_dx, 1.0, height - height_dz));
+  let height_dx = get_wave_height(w_pos + vec2<f32>(delta, 0.0));
+  let height_dz = get_wave_height(w_pos + vec2<f32>(0.0, delta));
+  let normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
   world_position.y = height;
 
   let color = vec3<f32>(0.01, 0.03, 0.05);

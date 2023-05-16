@@ -57,7 +57,7 @@ fn main() {
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
-      wave_height: 1.0,
+      amplitude: 1.0,
     })
     .add_plugin(WaterPlugin)
     // Ship Physics.

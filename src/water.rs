@@ -7,14 +7,19 @@ use material::*;
 pub const WATER_SIZE: u16 = 256;
 pub const WATER_GRID_SIZE: u16 = 6;
 
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Clone, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct WaterSettings {
   pub height: f32,
+  pub amplitude: f32,
 }
 
 impl Default for WaterSettings {
   fn default() -> Self {
-    Self { height: 1.0 }
+    Self {
+      height: 1.0,
+      amplitude: 1.0,
+    }
   }
 }
 
@@ -80,7 +85,9 @@ fn setup_water(
           let x = (x * WATER_SIZE) as f32 - offset;
           let y = (y * WATER_SIZE) as f32 - offset;
           // Water material. TODO: re-use?
-          let material = materials.add(WaterMaterial {});
+          let material = materials.add(WaterMaterial {
+            amplitude: settings.amplitude,
+          });
 
           parent.spawn((
             WaterTileBundle::new(mesh.clone(), material, water_height, Vec2::new(x, y)),
@@ -91,6 +98,12 @@ fn setup_water(
     });
 }
 
+fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<WaterMaterial>>) {
+  for (_, mat) in materials.iter_mut() {
+    mat.amplitude = settings.amplitude;
+  }
+}
+
 #[derive(Default, Clone, Debug)]
 pub struct WaterPlugin;
 
@@ -98,7 +111,9 @@ impl Plugin for WaterPlugin {
   fn build(&self, app: &mut App) {
     app
       .init_resource::<WaterSettings>()
+      .register_type::<WaterSettings>()
       .add_plugin(WaterMaterialPlugin)
-      .add_startup_system(setup_water);
+      .add_startup_system(setup_water)
+      .add_system(update_materials.run_if(resource_changed::<WaterSettings>()));
   }
 }

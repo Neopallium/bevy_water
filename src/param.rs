@@ -21,7 +21,7 @@ impl<'w> WaterParam<'w> {
   /// The height of the waves at the given global position.
   pub fn wave_height(&self, position: Vec3) -> f32 {
     let time = self.time.elapsed_seconds_wrapped();
-    get_wave_height_2d(time, position.xz()) + self.settings.height
+    self.settings.height + self.settings.amplitude * get_wave_height_2d(time, position.xz())
   }
 
   /// Calculates the point of the waves at the given position.

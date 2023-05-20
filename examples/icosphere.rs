@@ -54,7 +54,8 @@ fn setup(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<WaterMaterial>>,
+  mut water_materials: ResMut<Assets<WaterMaterial>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
@@ -65,15 +66,44 @@ fn setup(
     .try_into().expect("Icosphere"),
   );
   // Water material.
-  let material = materials.add(WaterMaterial {
+  let material = water_materials.add(WaterMaterial {
+    base_color: Color::rgba(0.01, 0.03, 0.05, 0.99),
     amplitude: settings.amplitude,
     coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   });
 
+  // Spawn water entity.
   commands
     .spawn((
       Name::new(format!("Water world")),
+      MaterialMeshBundle {
+        mesh,
+        material,
+        transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        ..default()
+      },
+      NotShadowCaster,
+    ));
+
+  // Mesh for terrain.
+  let mesh: Handle<Mesh> = meshes.add(
+    shape::Icosphere {
+      radius: RADIUS - 0.4,
+      subdivisions: 15,
+    }
+    .try_into().expect("Icosphere"),
+  );
+  // Terrain material.
+  let material = materials.add(StandardMaterial {
+    base_color: Color::OLIVE,
+    ..default()
+  });
+
+  // Spawn planet entity.
+  commands
+    .spawn((
+      Name::new(format!("Planet terrain")),
       MaterialMeshBundle {
         mesh,
         material,

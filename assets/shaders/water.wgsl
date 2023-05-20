@@ -23,6 +23,8 @@ struct WaterMaterial {
   alpha_cutoff: f32,
   // WaterMaterial fields.
   amplitude: f32,
+  coord_offset: vec2<f32>,
+  coord_scale: vec2<f32>,
 };
 
 @group(1) @binding(0)
@@ -106,6 +108,12 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
   return material.amplitude * d;
 }
 
+fn uv_to_coord(uv: vec2<f32>) -> vec2<f32> {
+  // Invert the y UV coord.
+  let w_uv = vec2<f32>(uv.x, 1.0 - uv.y);
+  return material.coord_offset + (w_uv * material.coord_scale);
+}
+
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
   var out: VertexOutput;
@@ -121,8 +129,10 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   let world_position = mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
 
   // Add the wave height to the world position.
-  let height = get_wave_height(world_position.xz);
-  out.world_position = world_position + vec4<f32>(0., height, 0., 0.);
+  let w_pos = uv_to_coord(vertex.uv);
+  let height = get_wave_height(w_pos);
+
+  out.world_position = world_position + vec4<f32>((out.world_normal * height), 0.);
   out.frag_coord = mesh_position_world_to_clip(out.world_position);
 
 #ifdef VERTEX_UVS
@@ -143,13 +153,13 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var world_position: vec4<f32> = in.world_position;
-  let w_pos = world_position.xz;
+  let w_pos = uv_to_coord(in.uv);
   // Calculate normal.
   let delta = 0.2;
   let height = get_wave_height(w_pos);
   let height_dx = get_wave_height(w_pos + vec2<f32>(delta, 0.0));
   let height_dz = get_wave_height(w_pos + vec2<f32>(0.0, delta));
-  let world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
+  let world_normal = normalize(in.world_normal + (vec3<f32>(height - height_dx, delta, height - height_dz) * 8.0));
 
   var output_color: vec4<f32> = material.base_color;
 #ifdef VERTEX_COLORS
@@ -253,7 +263,7 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
 #endif
 
   // show grid
-  //let f_pos = step(fract((w_pos / 1.06274)), vec2<f32>(0.995));
+  //let f_pos = step(fract((w_pos / 10.06274)), vec2<f32>(0.995));
   //let grid = step(f_pos.x + f_pos.y, 1.00);
   //output_color = output_color + vec4<f32>(grid, grid, grid, 0.00);
 

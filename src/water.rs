@@ -103,14 +103,17 @@ fn setup_water(
         for y in 0..grid.y {
           let x = (x * WATER_SIZE) as f32 - offset;
           let y = (y * WATER_SIZE) as f32 - offset;
-          // Water material. TODO: re-use?
+          let tile_offset = Vec2::new(x, y);
+          // Water material.
           let material = materials.add(WaterMaterial {
             amplitude: settings.amplitude,
+            coord_offset: tile_offset,
+            coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
             ..default()
           });
 
           parent.spawn((
-            WaterTileBundle::new(mesh.clone(), material, water_height, Vec2::new(x, y)),
+            WaterTileBundle::new(mesh.clone(), material, water_height, tile_offset),
             NotShadowCaster,
           ));
         }

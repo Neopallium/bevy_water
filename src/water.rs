@@ -106,6 +106,7 @@ fn setup_water(
           // Water material. TODO: re-use?
           let material = materials.add(WaterMaterial {
             amplitude: settings.amplitude,
+            ..default()
           });
 
           parent.spawn((

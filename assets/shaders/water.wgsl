@@ -1,8 +1,7 @@
 #import bevy_pbr::mesh_view_bindings
-#import bevy_pbr::pbr_bindings
 #import bevy_pbr::mesh_bindings
-#import bevy_pbr::mesh_functions
 
+#import bevy_pbr::pbr_types
 #import bevy_pbr::utils
 #import bevy_pbr::clustered_forward
 #import bevy_pbr::lighting
@@ -10,20 +9,58 @@
 #import bevy_pbr::shadows
 #import bevy_pbr::fog
 #import bevy_pbr::pbr_functions
+#import bevy_pbr::mesh_functions
 
 struct WaterMaterial {
+  // StandardMaterial fields.
+  base_color: vec4<f32>,
+  emissive: vec4<f32>,
+  perceptual_roughness: f32,
+  metallic: f32,
+  reflectance: f32,
+  // 'flags' is a bit field indicating various options. u32 is 32 bits so we have up to 32 options.
+  flags: u32,
+  alpha_cutoff: f32,
+  // WaterMaterial fields.
   amplitude: f32,
 };
 
 @group(1) @binding(0)
-var<uniform> water_material: WaterMaterial;
+var<uniform> material: WaterMaterial;
+@group(1) @binding(1)
+var base_color_texture: texture_2d<f32>;
+@group(1) @binding(2)
+var base_color_sampler: sampler;
+@group(1) @binding(3)
+var emissive_texture: texture_2d<f32>;
+@group(1) @binding(4)
+var emissive_sampler: sampler;
+@group(1) @binding(5)
+var metallic_roughness_texture: texture_2d<f32>;
+@group(1) @binding(6)
+var metallic_roughness_sampler: sampler;
+@group(1) @binding(7)
+var occlusion_texture: texture_2d<f32>;
+@group(1) @binding(8)
+var occlusion_sampler: sampler;
+@group(1) @binding(9)
+var normal_map_texture: texture_2d<f32>;
+@group(1) @binding(10)
+var normal_map_sampler: sampler;
 
 struct Vertex {
-  @location(0) pos: vec3<f32>,
+  @location(0) position: vec3<f32>,
   @location(1) normal: vec3<f32>,
   @location(2) uv: vec2<f32>,
 #ifdef VERTEX_TANGENTS
   @location(3) tangent: vec4<f32>,
+#endif
+#ifdef VERTEX_COLORS
+    @location(4) color: vec4<f32>,
+#endif
+#ifdef SKINNED
+    @location(5) joint_indices: vec4<u32>,
+    @location(6) joint_weights: vec4<f32>,
 #endif
 };
 
@@ -66,24 +103,40 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
   d = d + wave((p - time) * 0.3) * 0.3;
   d = d + wave((p + time) * 0.5) * 0.2;
   d = d + wave((p - time) * 0.6) * 0.2;
-  return water_material.amplitude * d;
+  return material.amplitude * d;
 }
 
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
-  // Need the world position when calculating wave height.
-  var world_position = mesh_position_local_to_world(mesh.model, vec4<f32>(vertex.pos, 1.0));
+  var out: VertexOutput;
+
+#ifdef SKINNED
+  var model = skin_model(vertex.joint_indices, vertex.joint_weights);
+  out.world_normal = skin_normals(model, vertex.normal);
+#else
+  var model = mesh.model;
+  out.world_normal = mesh_normal_local_to_world(vertex.normal);
+#endif
+
+  let world_position = mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
 
   // Add the wave height to the world position.
   let height = get_wave_height(world_position.xz);
-
-  var out: VertexOutput;
   out.world_position = world_position + vec4<f32>(0., height, 0., 0.);
-#ifdef VERTEX_TANGENTS
-  out.world_tangent = mesh_tangent_local_to_world(mesh.model, vertex.tangent);
-#endif
   out.frag_coord = mesh_position_world_to_clip(out.world_position);
+
+#ifdef VERTEX_UVS
   out.uv = vertex.uv;
+#endif
+
+#ifdef VERTEX_TANGENTS
+  out.world_tangent = mesh_tangent_local_to_world(model, vertex.tangent);
+#endif
+
+#ifdef VERTEX_COLORS
+  out.color = vertex.color;
+#endif
+
   return out;
 }
 
@@ -96,56 +149,91 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   let height = get_wave_height(w_pos);
   let height_dx = get_wave_height(w_pos + vec2<f32>(delta, 0.0));
   let height_dz = get_wave_height(w_pos + vec2<f32>(0.0, delta));
-  let normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
-  world_position.y = height;
+  let world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
 
-  let color = vec3<f32>(0.01, 0.03, 0.05);
-
-  var output_color: vec4<f32> = vec4<f32>(color.xyz, 0.97);
-  
-  // show grid
-  //let f_pos = step(fract((w_pos / 1.06274)), vec2<f32>(0.995));
-  //let grid = step(f_pos.x + f_pos.y, 1.00);
-  //output_color = output_color + vec4<f32>(grid, grid, grid, 0.00);
-
+  var output_color: vec4<f32> = material.base_color;
+#ifdef VERTEX_COLORS
+  output_color = output_color * in.color;
+#endif
+#ifdef VERTEX_UVS
+  if ((material.flags & STANDARD_MATERIAL_FLAGS_BASE_COLOR_TEXTURE_BIT) != 0u) {
+    output_color = output_color * textureSample(base_color_texture, base_color_sampler, in.uv);
+  }
+#endif
   // Prepare a 'processed' StandardMaterial by sampling all textures to resolve
   // the material members
-  var pbr_input = pbr_input_new();
+  var pbr_input: PbrInput;
 
   pbr_input.material.base_color = output_color;
-  pbr_input.material.flags = STANDARD_MATERIAL_FLAGS_ALPHA_MODE_BLEND;
+  pbr_input.material.reflectance = material.reflectance;
+  pbr_input.material.flags = material.flags;
+  pbr_input.material.alpha_cutoff = material.alpha_cutoff;
 
-  pbr_input.material.perceptual_roughness = 0.22;
+  // NOTE: Unlit bit not set means == 0 is true, so the true case is if lit
+  if ((material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) == 0u) {
+    // TODO use .a for exposure compensation in HDR
+    var emissive: vec4<f32> = material.emissive;
+#ifdef VERTEX_UVS
+    if ((material.flags & STANDARD_MATERIAL_FLAGS_EMISSIVE_TEXTURE_BIT) != 0u) {
+      emissive = vec4<f32>(emissive.rgb * textureSample(emissive_texture, emissive_sampler, in.uv).rgb, 1.0);
+    }
+#endif
+    pbr_input.material.emissive = emissive;
 
-  pbr_input.frag_coord = in.frag_coord;
-  pbr_input.world_position = world_position;
-  pbr_input.world_normal = prepare_world_normal(
-      normal,
-      (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT) != 0u,
+    var metallic: f32 = material.metallic;
+    var perceptual_roughness: f32 = material.perceptual_roughness;
+#ifdef VERTEX_UVS
+    if ((material.flags & STANDARD_MATERIAL_FLAGS_METALLIC_ROUGHNESS_TEXTURE_BIT) != 0u) {
+      let metallic_roughness = textureSample(metallic_roughness_texture, metallic_roughness_sampler, in.uv);
+      // Sampling from GLTF standard channels for now
+      metallic = metallic * metallic_roughness.b;
+      perceptual_roughness = perceptual_roughness * metallic_roughness.g;
+    }
+#endif
+    pbr_input.material.metallic = metallic;
+    pbr_input.material.perceptual_roughness = perceptual_roughness;
+
+    var occlusion: f32 = 1.0;
+#ifdef VERTEX_UVS
+    if ((material.flags & STANDARD_MATERIAL_FLAGS_OCCLUSION_TEXTURE_BIT) != 0u) {
+      occlusion = textureSample(occlusion_texture, occlusion_sampler, in.uv).r;
+    }
+#endif
+    pbr_input.frag_coord = in.frag_coord;
+    pbr_input.world_position = world_position;
+    pbr_input.world_normal = prepare_world_normal(
+      world_normal,
+      (material.flags & STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT) != 0u,
       in.is_front,
-  );
+    );
 
-  pbr_input.is_orthographic = view.projection[3].w == 1.0;
+    pbr_input.is_orthographic = view.projection[3].w == 1.0;
 
-  pbr_input.N = apply_normal_mapping(
-    pbr_input.material.flags,
-    pbr_input.world_normal,
+    pbr_input.N = apply_normal_mapping(
+      material.flags,
+      pbr_input.world_normal,
 #ifdef VERTEX_TANGENTS
 #ifdef STANDARDMATERIAL_NORMAL_MAP
-    in.world_tangent,
+      in.world_tangent,
 #endif
 #endif
-    in.uv,
-  );
-  pbr_input.V = calculate_view(world_position, pbr_input.is_orthographic);
+#ifdef VERTEX_UVS
+      in.uv,
+#endif
+    );
+    pbr_input.V = calculate_view(world_position, pbr_input.is_orthographic);
+    pbr_input.occlusion = occlusion;
 
-  pbr_input.flags = mesh.flags;
+    pbr_input.flags = mesh.flags;
 
-  output_color = pbr(pbr_input);
+    output_color = pbr(pbr_input);
+  } else {
+    output_color = alpha_discard(pbr_input.material, output_color);
+  }
 
   // fog
-  if (fog.mode != FOG_MODE_OFF && (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_FOG_ENABLED_BIT) != 0u) {
-    output_color = apply_fog(output_color, world_position.xyz, view.world_position.xyz);
+  if (fog.mode != FOG_MODE_OFF && (material.flags & STANDARD_MATERIAL_FLAGS_FOG_ENABLED_BIT) != 0u) {
+    output_color = apply_fog(output_color, in.world_position.xyz, view.world_position.xyz);
   }
 
 #ifdef TONEMAP_IN_SHADER
@@ -161,8 +249,13 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   output_color = vec4(output_rgb, output_color.a);
 #endif
 #ifdef PREMULTIPLY_ALPHA
-  output_color = premultiply_alpha(pbr_input.material.flags, output_color);
+  output_color = premultiply_alpha(material.flags, output_color);
 #endif
+
+  // show grid
+  //let f_pos = step(fract((w_pos / 1.06274)), vec2<f32>(0.995));
+  //let grid = step(f_pos.x + f_pos.y, 1.00);
+  //output_color = output_color + vec4<f32>(grid, grid, grid, 0.00);
 
   return output_color;
 }

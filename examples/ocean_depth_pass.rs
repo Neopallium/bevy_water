@@ -1,6 +1,7 @@
 //! Showcases dynamic ocean material + dynamic Sun/Atmosphere.
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
+use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::time::Stopwatch;
@@ -339,6 +340,8 @@ fn setup(
     },
     AtmosphereCamera::default(),
     Spectator,
+    // This will write the depth buffer to a texture that you can use in the main pass
+    DepthPrepass,
   ));
 
   // Spawn ships.

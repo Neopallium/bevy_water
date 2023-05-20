@@ -289,7 +289,10 @@ impl Plugin for WaterMaterialPlugin {
       Shader::from_wgsl
     );
 
-    app.add_plugin(MaterialPlugin::<WaterMaterial>::default())
+    app.add_plugin(MaterialPlugin::<WaterMaterial> {
+      prepass_enabled: false,
+      ..default()
+    })
       .register_type::<WaterMaterial>()
       .register_asset_reflect::<WaterMaterial>()
       .register_type::<Handle<WaterMaterial>>();

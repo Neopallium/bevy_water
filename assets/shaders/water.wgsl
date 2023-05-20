@@ -1,5 +1,6 @@
 #import bevy_pbr::mesh_view_bindings
 #import bevy_pbr::mesh_bindings
+#import bevy_pbr::prepass_utils
 
 #import bevy_pbr::pbr_types
 #import bevy_pbr::utils
@@ -74,6 +75,9 @@ struct VertexOutput {
 struct FragmentInput {
   @builtin(front_facing) is_front: bool,
   @builtin(position) frag_coord: vec4<f32>,
+#ifndef DEPTH_PREPASS
+  @builtin(sample_index) sample_index: u32,
+#endif
   #import bevy_pbr::mesh_vertex_output
 };
 
@@ -162,6 +166,12 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   let world_normal = normalize(in.world_normal + (vec3<f32>(height - height_dx, delta, height - height_dz) * 8.0));
 
   var output_color: vec4<f32> = material.base_color;
+
+#ifndef DEPTH_PREPASS
+  let depth = prepass_depth(in.frag_coord, in.sample_index);
+  output_color = vec4(output_color.xyz, output_color.w - smoothstep(0.0, 1.0, (depth * 80.0)));
+#endif
+
 #ifdef VERTEX_COLORS
   output_color = output_color * in.color;
 #endif

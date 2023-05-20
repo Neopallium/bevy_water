@@ -4,14 +4,16 @@ use bevy::prelude::*;
 pub mod material;
 use material::*;
 
-pub const WATER_SIZE: u16 = 256;
-pub const WATER_GRID_SIZE: u16 = 6;
+pub const WATER_SIZE: u32 = 256;
+pub const WATER_GRID_SIZE: u32 = 6;
 
 #[derive(Resource, Clone, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct WaterSettings {
   pub height: f32,
   pub amplitude: f32,
+  pub update_materials: bool,
+  pub spawn_tiles: Option<UVec2>,
 }
 
 impl Default for WaterSettings {
@@ -19,6 +21,8 @@ impl Default for WaterSettings {
     Self {
       height: 1.0,
       amplitude: 1.0,
+      update_materials: true,
+      spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
     }
   }
 }
@@ -30,9 +34,15 @@ pub struct WaterBundle {
   pub spatial: SpatialBundle,
 }
 
+#[derive(Component, Default)]
+pub struct WaterTile {
+  pub offset: Vec2,
+}
+
 #[derive(Bundle, Default)]
 pub struct WaterTileBundle {
   pub name: Name,
+  pub tile: WaterTile,
   #[bundle]
   pub mesh: MaterialMeshBundle<WaterMaterial>,
 }
@@ -46,6 +56,9 @@ impl WaterTileBundle {
   ) -> Self {
     Self {
       name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
+      tile: WaterTile {
+        offset,
+      },
       mesh: MaterialMeshBundle {
         mesh,
         material,
@@ -63,6 +76,12 @@ fn setup_water(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<WaterMaterial>>,
 ) {
+  let grid = match settings.spawn_tiles {
+    Some(grid) => grid,
+    None => {
+      return;
+    }
+  };
   let water_height = settings.height;
   // Generate mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
@@ -80,8 +99,8 @@ fn setup_water(
     })
     .with_children(|parent| {
       let offset = (WATER_SIZE * WATER_GRID_SIZE) as f32 / 2.0;
-      for x in 0..WATER_GRID_SIZE {
-        for y in 0..WATER_GRID_SIZE {
+      for x in 0..grid.x {
+        for y in 0..grid.y {
           let x = (x * WATER_SIZE) as f32 - offset;
           let y = (y * WATER_SIZE) as f32 - offset;
           // Water material. TODO: re-use?
@@ -99,6 +118,10 @@ fn setup_water(
 }
 
 fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<WaterMaterial>>) {
+  if !settings.update_materials {
+    // Don't update water materials.
+    return;
+  }
   for (_, mat) in materials.iter_mut() {
     mat.amplitude = settings.amplitude;
   }

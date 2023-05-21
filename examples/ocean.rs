@@ -1,6 +1,9 @@
 //! Showcases dynamic ocean material + dynamic Sun/Atmosphere.
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
+#[cfg(feature = "depth_prepass")]
+use bevy::core_pipeline::prepass::DepthPrepass;
+
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::time::Stopwatch;
@@ -348,7 +351,7 @@ fn setup(
     ));
 
   // camera
-  commands.spawn((
+  let mut cam = commands.spawn((
     Camera3dBundle {
       ..default()
     },
@@ -359,8 +362,15 @@ fn setup(
       alpha: 3.14,
       beta: 0.0,
       ..default()
-    }
+    },
   ));
+  #[cfg(feature = "depth_prepass")]
+  {
+    // This will write the depth buffer to a texture that you can use in the main pass
+    cam.insert(DepthPrepass);
+  }
+  // This is just to keep the compiler happy when not using `depth_prepass` feature.
+  cam.insert(Name::new("Camera"));
 
   // Spawn ships.
   let scene = asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0");

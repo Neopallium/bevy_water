@@ -10,13 +10,16 @@ repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
 [features]
-default = ["embed_shaders"]
+default = ["embed_shaders", "depth_prepass"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []
 
 # Enable debug lines in examples.
 debug = []
+
+# Enable DepthPrepass in examples.
+depth_prepass = []
 
 [dependencies]
 anyhow = "1.0"

@@ -154,6 +154,10 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   return out;
 }
 
+fn ndc_depth_to_linear(ndc_depth: f32) -> f32 {
+  return -view.projection[3][2] / ndc_depth;
+}
+
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var world_position: vec4<f32> = in.world_position;
@@ -168,8 +172,17 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var output_color: vec4<f32> = material.base_color;
 
 #ifndef DEPTH_PREPASS
-  let depth = prepass_depth(in.frag_coord, in.sample_index);
-  output_color = vec4(output_color.xyz, output_color.w - smoothstep(0.0, 1.0, (depth * 80.0)));
+	let strength = 0.2;
+  let z_depth_buffer_ndc = prepass_depth(in.frag_coord, in.sample_index);
+  let z_depth_buffer_view = ndc_depth_to_linear(z_depth_buffer_ndc);
+  let z_fragment_view = ndc_depth_to_linear(in.frag_coord.z);
+  let depth_diff_view = z_fragment_view - z_depth_buffer_view;
+	let mu = 0.1;
+	let beers_law = exp(-depth_diff_view * mu);
+	let deep_color = vec3<f32>(0.200, 0.412, 0.537);
+	let shalow_color = vec3<f32>(0.443, 0.776, 0.812);
+	let depth_color = mix(deep_color, shalow_color, beers_law);
+  output_color = vec4<f32>(depth_color, 1.0 - beers_law);
 #endif
 
 #ifdef VERTEX_COLORS

@@ -9,7 +9,7 @@ use bevy::utils::Duration;
 use bevy::{app::AppExit, prelude::*};
 
 use bevy_atmosphere::prelude::*;
-use bevy_spectator::*;
+use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
@@ -46,7 +46,8 @@ fn main() {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
-    .add_plugin(SpectatorPlugin) // Simple movement for this example
+    // Simple pan/orbit camera.
+    .add_plugin(PanOrbitCameraPlugin)
     .add_plugin(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
       Duration::from_millis(1000),
@@ -300,14 +301,6 @@ fn setup(
     })
     .insert(Sun); // Marks the light as Sun
 
-  // Mesh for terrain.
-  let mesh: Handle<Mesh> = meshes.add(
-    shape::Icosphere {
-      radius: 2.0,
-      ..default()
-    }
-    .try_into().expect("Icosphere"),
-  );
   // Terrain material.
   let material = materials.add(StandardMaterial {
     base_color: Color::rgba_u8(177, 168, 132, 255),
@@ -317,13 +310,37 @@ fn setup(
     ..default()
   });
 
-  // Spawn simple terrain entity.
+  // Spawn simple terrain plane.
   commands
     .spawn((
       Name::new(format!("Terrain")),
       MaterialMeshBundle {
-        mesh,
-        material,
+        mesh: meshes.add(
+          shape::Plane {
+            size: 256.0 * 6.0,
+            ..default()
+          }
+          .into(),
+        ),
+        material: material.clone(),
+        transform: Transform::from_xyz(0.0, -5.0, 0.0),
+        ..default()
+      },
+      NotShadowCaster,
+    ));
+  // Spawn fake island.
+  commands
+    .spawn((
+      Name::new(format!("Fake island")),
+      MaterialMeshBundle {
+        mesh: meshes.add(
+          shape::Icosphere {
+            radius: 2.0,
+            ..default()
+          }
+          .try_into().expect("Icosphere"),
+        ),
+        material: material.clone(),
         transform: Transform::from_xyz(-30.0, -10.0, -30.0)
           .with_scale(Vec3::new(30.0, 6.5, 30.0)),
         ..default()
@@ -334,12 +351,16 @@ fn setup(
   // camera
   commands.spawn((
     Camera3dBundle {
-      transform: Transform::from_xyz(25.0, WATER_HEIGHT + 5.0, -61.0)
-        .looking_at(Vec3::new(11.0, WATER_HEIGHT, 18.0), Vec3::Y),
       ..default()
     },
     AtmosphereCamera::default(),
-    Spectator,
+    PanOrbitCamera {
+      focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
+      radius: 4.0,
+      alpha: 3.14,
+      beta: 0.0,
+      ..default()
+    },
     // This will write the depth buffer to a texture that you can use in the main pass
     DepthPrepass,
   ));

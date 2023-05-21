@@ -29,3 +29,4 @@ bevy-inspector-egui = "0.18.1"
 bevy_atmosphere = { version = "0.6" }
 bevy_prototype_debug_lines = { version = "0.10.1", features = ["3d"] }
 bevy_spectator = "0.2"
+bevy_panorbit_camera = { version = "0.4.1", features = ["bevy_egui"] }

@@ -24,6 +24,11 @@ struct WaterMaterial {
   alpha_cutoff: f32,
   // WaterMaterial fields.
   amplitude: f32,
+  clarity: f32,
+  edge_scale: f32,
+  deep_color: vec4<f32>,
+  shallow_color: vec4<f32>,
+  edge_color: vec4<f32>,
   coord_offset: vec2<f32>,
   coord_scale: vec2<f32>,
 };
@@ -172,17 +177,20 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
   var output_color: vec4<f32> = material.base_color;
 
 #ifndef DEPTH_PREPASS
-	let strength = 0.2;
+  let water_clarity = material.clarity;
+  let deep_color = material.deep_color;
+  let shallow_color = material.shallow_color;
+  let edge_scale = material.edge_scale;
+  let edge_color = material.edge_color;
+
   let z_depth_buffer_ndc = prepass_depth(in.frag_coord, in.sample_index);
   let z_depth_buffer_view = ndc_depth_to_linear(z_depth_buffer_ndc);
   let z_fragment_view = ndc_depth_to_linear(in.frag_coord.z);
   let depth_diff_view = z_fragment_view - z_depth_buffer_view;
-	let mu = 0.1;
-	let beers_law = exp(-depth_diff_view * mu);
-	let deep_color = vec3<f32>(0.200, 0.412, 0.537);
-	let shalow_color = vec3<f32>(0.443, 0.776, 0.812);
-	let depth_color = mix(deep_color, shalow_color, beers_law);
-  output_color = vec4<f32>(depth_color, 1.0 - beers_law);
+  let beers_law = exp(-depth_diff_view * water_clarity);
+  let depth_color = vec4<f32>(mix(deep_color.xyz, shallow_color.xyz, beers_law), 1.0 - beers_law);
+  let water_color = mix(edge_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));
+  output_color = output_color * water_color;
 #endif
 
 #ifdef VERTEX_COLORS

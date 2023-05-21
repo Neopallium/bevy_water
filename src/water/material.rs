@@ -42,7 +42,18 @@ pub struct WaterMaterial {
   pub alpha_mode: AlphaMode,
   pub depth_bias: f32,
   // Water fields.
+  /// Wave amplitude.
   pub amplitude: f32,
+  /// Water clarity, 0.0 = invisible.
+  pub clarity: f32,
+  /// Water color at deepest level.
+  pub deep_color: Color,
+  /// Water color at shallow areas.
+  pub shallow_color: Color,
+  /// Scale of the water edge effect.
+  pub edge_scale: f32,
+  /// Color of the edge effect.
+  pub edge_color: Color,
   pub coord_offset: Vec2,
   pub coord_scale: Vec2,
 }
@@ -51,7 +62,7 @@ impl Default for WaterMaterial {
   fn default() -> Self {
     Self {
       // StandardMaterial fields.
-      base_color: Color::rgba(0.01, 0.03, 0.05, 0.97),
+      base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
       base_color_texture: None,
       emissive: Color::BLACK,
       emissive_texture: None,
@@ -70,6 +81,11 @@ impl Default for WaterMaterial {
       depth_bias: 0.0,
       // WaterMaterial fields.
       amplitude: 1.0,
+      clarity: 0.1,
+      deep_color: Color::rgba(0.2, 0.41, 0.54, 1.0),
+      shallow_color: Color::rgba(0.45, 0.78, 0.81, 1.0),
+      edge_scale: 0.1,
+      edge_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
       coord_offset: Vec2::new(0.0, 0.0),
       coord_scale: Vec2::new(1.0, 1.0),
     }
@@ -88,6 +104,11 @@ pub struct WaterMaterialUniform {
   pub alpha_cutoff: f32,
   // WaterMaterial fields.
   pub amplitude: f32,
+  pub clarity: f32,
+  pub edge_scale: f32,
+  pub deep_color: Color,
+  pub shallow_color: Color,
+  pub edge_color: Color,
   pub coord_offset: Vec2,
   pub coord_scale: Vec2,
 }
@@ -158,6 +179,11 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
       alpha_cutoff,
       // WaterMaterial fields.
       amplitude: self.amplitude,
+      clarity: self.clarity,
+      deep_color: self.deep_color,
+      shallow_color: self.shallow_color,
+      edge_scale: self.edge_scale,
+      edge_color: self.edge_color,
       coord_offset: self.coord_offset,
       coord_scale: self.coord_scale,
     }

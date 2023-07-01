@@ -13,6 +13,36 @@ cargo run --release --example ocean
 
 [Pirate ship from asset pack CC0](https://www.kenney.nl/assets/pirate-kit)
 
+## WASM examples
+
+### Setup
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli
+```
+
+### Build & Run
+
+Following is an example for `ocean`. For other examples, change the `ocean` in the
+following commands.
+
+```sh
+cargo build --release --example ocean --target wasm32-unknown-unknown \
+	--no-default-features --features embed_shaders
+
+wasm-bindgen --out-name wasm_example \
+  --out-dir examples/wasm/target \
+  --target web target/wasm32-unknown-unknown/release/examples/ocean.wasm
+```
+
+Then serve `examples/wasm` directory to browser. i.e.
+
+```sh
+# cargo install basic-http-server
+basic-http-server examples/wasm
+```
+
 # Features
 
 - Moving 3d waves (vertex height offset).

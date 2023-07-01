@@ -46,20 +46,8 @@ fn main() {
   #[cfg(target_arch = "wasm32")]
   app.insert_resource(Msaa::Off);
 
-    // Atmosphere + daylight cycle.
-  app.insert_resource(AtmosphereModel::new(Nishita {
-      sun_position: Vec3::new(0.0, 1.0, 1.0),
-      ..default()
-    }))
     // Simple pan/orbit camera.
-    .add_plugin(PanOrbitCameraPlugin)
-    .add_plugin(AtmospherePlugin)
-    .insert_resource(CycleTimer::new(
-      Duration::from_millis(1000),
-      0.2,
-    ))
-    .add_system(timer_control)
-    .add_system(daylight_cycle)
+  app.add_plugin(PanOrbitCameraPlugin)
     // Improve shadows.
     .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
@@ -76,8 +64,23 @@ fn main() {
     // Wireframe
     .add_plugin(WireframePlugin)
     .init_resource::<UiState>()
-    .add_system(toggle_wireframe)
-    .run();
+    .add_system(toggle_wireframe);
+
+  // Atmosphere + daylight cycle.
+  #[cfg(not(target_arch = "wasm32"))]
+  app.insert_resource(AtmosphereModel::new(Nishita {
+      sun_position: Vec3::new(0.0, 1.0, 1.0),
+      ..default()
+    }))
+    .add_plugin(AtmospherePlugin)
+    .insert_resource(CycleTimer::new(
+      Duration::from_millis(1000),
+      0.2,
+    ))
+    .add_system(timer_control)
+    .add_system(daylight_cycle);
+
+  app.run();
 }
 
 fn handle_quit(input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
@@ -369,7 +372,6 @@ fn setup(
         ),
         ..default()
     },
-    AtmosphereCamera::default(),
     PanOrbitCamera {
       focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
       radius: 4.0,
@@ -378,6 +380,10 @@ fn setup(
       ..default()
     },
   ));
+
+  #[cfg(not(target_arch = "wasm32"))]
+  cam.insert(AtmosphereCamera::default());
+
   #[cfg(feature = "depth_prepass")]
   {
     // This will write the depth buffer to a texture that you can use in the main pass

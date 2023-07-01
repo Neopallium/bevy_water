@@ -1,8 +1,11 @@
+#[cfg(feature = "depth_prepass")]
+use bevy::core_pipeline::prepass::DepthPrepass;
+
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
 
-use bevy_spectator::*;
+use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 use bevy_water::material::WaterMaterial;
 use bevy_water::*;
@@ -17,7 +20,8 @@ fn main() {
       watch_for_changes: true,
       ..default()
     }))
-    .add_plugin(SpectatorPlugin) // Simple movement for this example
+    // Simple pan/orbit camera.
+    .add_plugin(PanOrbitCameraPlugin)
     .insert_resource(WaterSettings {
       amplitude: 0.4,
       spawn_tiles: None,
@@ -67,8 +71,8 @@ fn setup(
   );
   // Water material.
   let material = water_materials.add(WaterMaterial {
-    base_color: Color::rgba(0.01, 0.03, 0.05, 0.99),
     amplitude: settings.amplitude,
+    clarity: 0.05,
     coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   });
@@ -89,7 +93,7 @@ fn setup(
   // Mesh for terrain.
   let mesh: Handle<Mesh> = meshes.add(
     shape::Icosphere {
-      radius: RADIUS - 0.4,
+      radius: RADIUS - 0.8,
       subdivisions: 15,
     }
     .try_into().expect("Icosphere"),
@@ -125,11 +129,22 @@ fn setup(
   });
 
   // camera
-  commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0)
-      .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+  let mut cam = commands.spawn((Camera3dBundle {
     ..default()
   },
-    Spectator,
+    PanOrbitCamera {
+      focus: Vec3::new(0.0, 0.0, 0.0),
+      radius: RADIUS + 15.0,
+      alpha: 3.14,
+      beta: 0.0,
+      ..default()
+    },
   ));
+  #[cfg(feature = "depth_prepass")]
+  {
+    // This will write the depth buffer to a texture that you can use in the main pass
+    cam.insert(DepthPrepass);
+  }
+  // This is just to keep the compiler happy when not using `depth_prepass` feature.
+  cam.insert(Name::new("Camera"));
 }

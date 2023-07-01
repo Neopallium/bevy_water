@@ -40,7 +40,7 @@ impl Default for WaterSettings {
     Self {
       height: 1.0,
       amplitude: 1.0,
-      clarity: 0.1,
+      clarity: 0.25,
       base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
       deep_color: Color::rgba(0.2, 0.41, 0.54, 1.0),
       shallow_color: Color::rgba(0.45, 0.78, 0.81, 1.0),

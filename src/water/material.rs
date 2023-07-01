@@ -207,26 +207,45 @@ impl From<&WaterMaterial> for WaterMaterialKey {
   }
 }
 
-pub const NOISE_FBM_SHADER_HANDLE: HandleUntyped =
+pub const NOISE_FBM_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x47c86614dedb33fe);
 
-pub const NOISE_RANDOM_SHADER_HANDLE: HandleUntyped =
+pub const NOISE_RANDOM_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x339ea286e4c7be3e);
 
-pub const NOISE_VNOISE_SHADER_HANDLE: HandleUntyped =
+pub const NOISE_VNOISE_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x2cb48f03a340aedc);
 
-pub const WATER_SHADER_HANDLE: HandleUntyped =
+pub const WATER_BINDINGS_HANDLE: HandleUntyped =
+  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xa9010bab18132e4b);
+
+pub const WATER_FUNCTIONS_HANDLE: HandleUntyped =
+  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xb73bf2f50994c394);
+
+pub const WATER_VERTEX_SHADER_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xcea5177230c961ac);
 
+pub const WATER_FRAGMENT_SHADER_HANDLE: HandleUntyped =
+  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xbe72b1f6760558cb);
+
 #[cfg(feature = "embed_shaders")]
-fn water_shader() -> ShaderRef {
-  WATER_SHADER_HANDLE.typed().into()
+fn water_fragment_shader() -> ShaderRef {
+  WATER_FRAGMENT_SHADER_HANDLE.typed().into()
 }
 
 #[cfg(not(feature = "embed_shaders"))]
-fn water_shader() -> ShaderRef {
-  "shaders/water.wgsl".into()
+fn water_fragment_shader() -> ShaderRef {
+  "shaders/water_fragment.wgsl".into()
+}
+
+#[cfg(feature = "embed_shaders")]
+fn water_vertex_shader() -> ShaderRef {
+  WATER_VERTEX_SHADER_HANDLE.typed().into()
+}
+
+#[cfg(not(feature = "embed_shaders"))]
+fn water_vertex_shader() -> ShaderRef {
+  "shaders/water_vertex.wgsl".into()
 }
 
 impl Material for WaterMaterial {
@@ -236,12 +255,17 @@ impl Material for WaterMaterial {
     _layout: &MeshVertexBufferLayout,
     key: MaterialPipelineKey<Self>,
   ) -> Result<(), SpecializedMeshPipelineError> {
-    if key.bind_group_data.normal_map {
-      if let Some(fragment) = descriptor.fragment.as_mut() {
+    if let Some(fragment) = descriptor.fragment.as_mut() {
+      if key.bind_group_data.normal_map {
         fragment
           .shader_defs
           .push("STANDARDMATERIAL_NORMAL_MAP".into());
       }
+
+      #[cfg(feature = "depth_prepass")]
+      fragment
+        .shader_defs
+        .push("USE_DEPTH".into());
     }
     descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;
     if let Some(label) = &mut descriptor.label {
@@ -258,11 +282,11 @@ impl Material for WaterMaterial {
   }
 
   fn vertex_shader() -> ShaderRef {
-    water_shader()
+    water_vertex_shader()
   }
 
   fn fragment_shader() -> ShaderRef {
-    water_shader()
+    water_fragment_shader()
   }
 
   #[inline]
@@ -283,14 +307,14 @@ impl Plugin for WaterMaterialPlugin {
   fn build(&self, app: &mut App) {
     load_internal_asset!(
       app,
-      NOISE_FBM_SHADER_HANDLE,
+      NOISE_FBM_HANDLE,
       concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/noise/fbm.wgsl"),
       Shader::from_wgsl
     );
 
     load_internal_asset!(
       app,
-      NOISE_RANDOM_SHADER_HANDLE,
+      NOISE_RANDOM_HANDLE,
       concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/assets/shaders/noise/random.wgsl"
@@ -300,7 +324,7 @@ impl Plugin for WaterMaterialPlugin {
 
     load_internal_asset!(
       app,
-      NOISE_VNOISE_SHADER_HANDLE,
+      NOISE_VNOISE_HANDLE,
       concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/assets/shaders/noise/vnoise.wgsl"
@@ -310,8 +334,29 @@ impl Plugin for WaterMaterialPlugin {
 
     load_internal_asset!(
       app,
-      WATER_SHADER_HANDLE,
-      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/water.wgsl"),
+      WATER_BINDINGS_HANDLE,
+      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/water_bindings.wgsl"),
+      Shader::from_wgsl
+    );
+
+    load_internal_asset!(
+      app,
+      WATER_FUNCTIONS_HANDLE,
+      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/water_functions.wgsl"),
+      Shader::from_wgsl
+    );
+
+    load_internal_asset!(
+      app,
+      WATER_VERTEX_SHADER_HANDLE,
+      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/water_vertex.wgsl"),
+      Shader::from_wgsl
+    );
+
+    load_internal_asset!(
+      app,
+      WATER_FRAGMENT_SHADER_HANDLE,
+      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/water_fragment.wgsl"),
       Shader::from_wgsl
     );
 

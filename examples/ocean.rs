@@ -43,6 +43,9 @@ fn main() {
   app.add_plugin(DebugLinesPlugin::with_depth_test(true))
     .add_plugin(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
+  #[cfg(target_arch = "wasm32")]
+  app.insert_resource(Msaa::Off);
+
     // Atmosphere + daylight cycle.
   app.insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),

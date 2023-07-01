@@ -58,27 +58,28 @@ bevy = { version = "0.14.0", default-features = false, features = ["bevy_asset",
 
 [dev-dependencies]
 bevy = { version = "0.14.0", default-features = false , features = [
-  "animation",
+  #"animation",
   "bevy_asset",
-  "bevy_audio",
-  "bevy_gilrs",
+  #"bevy_audio",
+  #"bevy_gilrs",
   "bevy_scene",
   "bevy_winit",
   "bevy_core_pipeline",
   "bevy_pbr",
   "bevy_gltf",
   "bevy_render",
-  "bevy_sprite",
-  "bevy_text",
-  "bevy_ui",
+  #"bevy_sprite",
+  #"bevy_text",
+  #"bevy_ui",
   "png",
   "jpeg",
-  "hdr",
+  #"hdr",
   "ktx2",
   "zstd",
-  "vorbis",
-  "x11",
-  "bevy_gizmos",
+  #"vorbis",
+  #"x11",
+  #"filesystem_watcher",
+  #"bevy_gizmos",
   "android_shared_stdcxx",
   "tonemapping_luts",
   "default_font",
@@ -88,3 +89,8 @@ bevy_atmosphere = { version = "0.10" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 bevy_spectator = { version = "0.6" }
 bevy_panorbit_camera = { version = "0.19", features = ["bevy_egui"] }
+
+[profile.release]
+lto = true
+opt-level = 's'
+>>>>>>> 0216241 (Build ocean example.)

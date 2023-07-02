@@ -9,6 +9,9 @@ keywords = ["water", "ocean", "waves", "bevy"]
 repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
+[patch.crates-io]
+bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+
 [features]
 default = ["embed_shaders", "depth_prepass"]
 
@@ -24,12 +27,12 @@ depth_prepass = []
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.10", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.11.0-dev", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
-bevy = "0.10"
-bevy-inspector-egui = "0.18.1"
-bevy_atmosphere = { version = "0.6" }
-bevy_prototype_debug_lines = { version = "0.10.1", features = ["3d"] }
-bevy_spectator = "0.2"
-bevy_panorbit_camera = { version = "0.4.1", features = ["bevy_egui"] }
+bevy = "0.11.0-dev"
+#bevy-inspector-egui = "0.18.1"
+#bevy_atmosphere = { version = "0.6" }
+#bevy_prototype_debug_lines = { version = "0.10.1", features = ["3d"] }
+#bevy_spectator = "0.2"
+#bevy_panorbit_camera = { version = "0.4.1", features = ["bevy_egui"] }

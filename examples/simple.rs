@@ -17,7 +17,7 @@ fn main() {
     .add_plugin(WaterPlugin)
     .add_startup_system(setup);
 
-  #[cfg(target_arch = "wasm32")]
+  #[cfg(feature = "depth_prepass")]
   app.insert_resource(Msaa::Off);
 
   app.run();

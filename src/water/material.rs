@@ -2,11 +2,11 @@ use bevy::{
   asset::load_internal_asset,
   pbr::{MaterialPipeline, MaterialPipelineKey, StandardMaterialFlags, PBR_PREPASS_SHADER_HANDLE},
   prelude::*,
-  reflect::{std_traits::ReflectDefault, FromReflect, Reflect, TypeUuid},
+  reflect::{std_traits::ReflectDefault, Reflect, TypeUuid},
   render::{mesh::MeshVertexBufferLayout, render_asset::*, render_resource::*},
 };
 
-#[derive(AsBindGroup, Reflect, FromReflect, Debug, Clone, TypeUuid)]
+#[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "ea9ad5fe-a9ce-4ff1-aea8-d756ed456c46"]
 #[bind_group_data(WaterMaterialKey)]
 #[uniform(0, WaterMaterialUniform)]

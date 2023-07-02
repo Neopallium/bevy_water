@@ -43,7 +43,7 @@ fn main() {
   app.add_plugin(DebugLinesPlugin::with_depth_test(true))
     .add_plugin(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
-  #[cfg(target_arch = "wasm32")]
+  #[cfg(feature = "depth_prepass")]
   app.insert_resource(Msaa::Off);
 
     // Simple pan/orbit camera.

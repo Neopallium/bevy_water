@@ -3,13 +3,15 @@
 //
 #define_import_path bevy_water::noise::fbm
 
-const m2 = mat2x2<f32>(vec2<f32>(0.8, 0.6), vec2<f32>(-0.6, 0.8));
+#import bevy_water::noise::vnoise vnoise2d
+
 fn fbm(p: vec2<f32>) -> f32 {
-	var p = p;
+  let m2 = mat2x2<f32>(vec2<f32>(0.8, 0.6), vec2<f32>(-0.6, 0.8));
+  var p = p;
   var f = 0.;
-  f = f + 0.5000 * noise2(p); p = m2 * p * 2.02;
-  f = f + 0.2500 * noise2(p); p = m2 * p * 2.03;
-  f = f + 0.1250 * noise2(p); p = m2 * p * 2.01;
-  f = f + 0.0625 * noise2(p);
+  f = f + 0.5000 * vnoise2d(p); p = m2 * p * 2.02;
+  f = f + 0.2500 * vnoise2d(p); p = m2 * p * 2.03;
+  f = f + 0.1250 * vnoise2d(p); p = m2 * p * 2.01;
+  f = f + 0.0625 * vnoise2d(p);
   return f / 0.9375;
 }

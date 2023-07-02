@@ -55,7 +55,6 @@ impl Default for WaterSettings {
 #[derive(Bundle, Default)]
 pub struct WaterBundle {
   pub name: Name,
-  #[bundle]
   pub spatial: SpatialBundle,
 }
 
@@ -68,7 +67,6 @@ pub struct WaterTile {
 pub struct WaterTileBundle {
   pub name: Name,
   pub tile: WaterTile,
-  #[bundle]
   pub mesh: MaterialMeshBundle<WaterMaterial>,
 }
 

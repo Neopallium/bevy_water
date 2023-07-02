@@ -1,5 +1,7 @@
 #define_import_path bevy_water::noise::vnoise
 
+#import bevy_water::noise::random random2di, cubic_hermite_curve_2d
+
 fn vnoise2d(v: vec2<f32>) -> f32 {
 	let i = floor(v);
 	let f = fract(v);

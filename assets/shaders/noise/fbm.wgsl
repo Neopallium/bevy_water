@@ -5,9 +5,9 @@
 
 #import bevy_water::noise::vnoise vnoise2d
 
-fn fbm(p: vec2<f32>) -> f32 {
+fn fbm(v2: vec2<f32>) -> f32 {
   let m2 = mat2x2<f32>(vec2<f32>(0.8, 0.6), vec2<f32>(-0.6, 0.8));
-  var p = p;
+  var p = v2;
   var f = 0.;
   f = f + 0.5000 * vnoise2d(p); p = m2 * p * 2.02;
   f = f + 0.2500 * vnoise2d(p); p = m2 * p * 2.03;

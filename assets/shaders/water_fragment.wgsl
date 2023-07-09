@@ -58,7 +58,11 @@ fn fragment(
   let edge_scale = water_bindings::material.edge_scale;
   let edge_color = water_bindings::material.edge_color;
 
-  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, sample_index);
+#ifdef MULTISAMPLED
+  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, in.sample_index);
+#else
+  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, 0u);
+#endif
   let z_depth_buffer_view = ndc_depth_to_linear(z_depth_buffer_ndc);
   let z_fragment_view = ndc_depth_to_linear(in.position.z);
   let depth_diff_view = z_fragment_view - z_depth_buffer_view;

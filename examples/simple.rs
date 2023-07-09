@@ -14,8 +14,8 @@ fn main() {
       height: WATER_HEIGHT,
       ..default()
     })
-    .add_plugin(WaterPlugin)
-    .add_startup_system(setup);
+    .add_plugins(WaterPlugin)
+    .add_systems(Startup, setup);
 
   #[cfg(feature = "depth_prepass")]
   app.insert_resource(Msaa::Off);

@@ -174,8 +174,8 @@ impl Plugin for WaterPlugin {
     app
       .init_resource::<WaterSettings>()
       .register_type::<WaterSettings>()
-      .add_plugin(WaterMaterialPlugin)
-      .add_startup_system(setup_water)
-      .add_system(update_materials.run_if(resource_changed::<WaterSettings>()));
+      .add_plugins(WaterMaterialPlugin)
+      .add_systems(Startup, setup_water)
+      .add_systems(Update, update_materials.run_if(resource_changed::<WaterSettings>()));
   }
 }

@@ -6,11 +6,16 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::time::Stopwatch;
-use bevy::utils::Duration;
 use bevy::{app::AppExit, prelude::*};
+#[cfg(feature = "atmosphere")]
+use bevy::{
+  time::Stopwatch,
+  utils::Duration,
+};
 
+#[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
+#[cfg(feature = "atmosphere")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
@@ -19,8 +24,11 @@ use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 use bevy_water::*;
 
 const WATER_HEIGHT: f32 = 1.0;
+#[cfg(feature = "atmosphere")]
 const SPEED_MIN: f32 = 0.05;
+#[cfg(feature = "atmosphere")]
 const SPEED_DELTA: f32 = 0.01;
+#[cfg(feature = "atmosphere")]
 const SPEED_MAX: f32 = 1.0;
 
 fn main() {
@@ -35,7 +43,7 @@ fn main() {
         }),
         ..default()
       }).set(AssetPlugin {
-      watch_for_changes: true,
+      watch_for_changes: None,//true,
       ..default()
     }));
 
@@ -46,39 +54,41 @@ fn main() {
   #[cfg(feature = "depth_prepass")]
   app.insert_resource(Msaa::Off);
 
-    // Simple pan/orbit camera.
-  app.add_plugin(PanOrbitCameraPlugin)
-    // Improve shadows.
-    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
+  // Simple pan/orbit camera.
+  #[cfg(feature = "atmosphere")]
+  app.add_plugin(PanOrbitCameraPlugin);
+
+  // Improve shadows.
+  app.insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
       ..default()
     })
-    .add_plugin(WaterPlugin)
+    .add_plugins(WaterPlugin)
     // Ship Physics.
-    .add_system(update_ships)
+    .add_systems(Update, update_ships)
     // Setup
-    .add_startup_system(setup)
-    .add_system(handle_quit)
+    .add_systems(Startup, setup)
+    .add_systems(Update, handle_quit)
     // Wireframe
-    .add_plugin(WireframePlugin)
+    .add_plugins(WireframePlugin)
     .init_resource::<UiState>()
-    .add_system(toggle_wireframe);
+    .add_systems(Update, toggle_wireframe);
 
   // Atmosphere + daylight cycle.
-  #[cfg(not(target_arch = "wasm32"))]
+  #[cfg(feature = "atmosphere")]
   app.insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
-    .add_plugin(AtmospherePlugin)
+    .add_plugins(AtmospherePlugin)
     .insert_resource(CycleTimer::new(
       Duration::from_millis(1000),
       0.2,
     ))
-    .add_system(timer_control)
-    .add_system(daylight_cycle);
+    .add_systems(Update, timer_control)
+    .add_systems(Update, daylight_cycle);
 
   app.run();
 }
@@ -122,12 +132,14 @@ struct Sun;
 
 // Timer for updating the daylight cycle (updating the atmosphere every frame is slow, so it's better to do incremental changes)
 #[derive(Resource)]
+#[cfg(feature = "atmosphere")]
 struct CycleTimer {
   update: Timer,
   time: Stopwatch,
   speed: f32,
 }
 
+#[cfg(feature = "atmosphere")]
 impl CycleTimer {
   pub fn new(duration: Duration, speed: f32) -> Self {
     Self {
@@ -175,6 +187,7 @@ impl CycleTimer {
   }
 }
 
+#[cfg(feature = "atmosphere")]
 fn timer_control(input: Res<Input<KeyCode>>, mut timer: ResMut<CycleTimer>) {
   if input.just_pressed(KeyCode::P) {
     timer.toggle_pause();
@@ -190,6 +203,7 @@ fn timer_control(input: Res<Input<KeyCode>>, mut timer: ResMut<CycleTimer>) {
 }
 
 // We can edit the Atmosphere resource and it will be updated automatically
+#[cfg(feature = "atmosphere")]
 fn daylight_cycle(
   mut atmosphere: AtmosphereMut<Nishita>,
   mut query: Query<(&mut Transform, &mut DirectionalLight), With<Sun>>,
@@ -221,7 +235,6 @@ fn daylight_cycle(
 struct ShipBundle {
   ship: Ship,
   name: Name,
-  #[bundle]
   scene: SceneBundle,
 }
 
@@ -372,16 +385,18 @@ fn setup(
         ),
         ..default()
     },
-    PanOrbitCamera {
-      focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
-      radius: 4.0,
-      alpha: 3.14,
-      beta: 0.0,
-      ..default()
-    },
   ));
 
-  #[cfg(not(target_arch = "wasm32"))]
+  #[cfg(feature = "atmosphere")]
+  cam.insert(PanOrbitCamera {
+    focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
+    radius: 4.0,
+    alpha: 3.14,
+    beta: 0.0,
+    ..default()
+  });
+
+  #[cfg(feature = "atmosphere")]
   cam.insert(AtmosphereCamera::default());
 
   #[cfg(feature = "depth_prepass")]

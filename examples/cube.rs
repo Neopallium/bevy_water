@@ -17,16 +17,16 @@ fn main() {
       watch_for_changes: true,
       ..default()
     }))
-    .add_plugin(SpectatorPlugin) // Simple movement for this example
+    .add_plugins(SpectatorPlugin) // Simple movement for this example
     .insert_resource(WaterSettings {
       spawn_tiles: None,
       ..default()
     })
-    .add_plugin(WaterPlugin)
+    .add_plugins(WaterPlugin)
     // Wireframe
-    .add_plugin(WireframePlugin)
-    .add_startup_system(setup)
-    .add_system(toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
+    .add_plugins(WireframePlugin)
+    .add_system(Startup, setup)
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
     .run();
 }
 

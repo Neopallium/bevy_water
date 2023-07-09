@@ -21,17 +21,17 @@ fn main() {
       ..default()
     }))
     // Simple pan/orbit camera.
-    .add_plugin(PanOrbitCameraPlugin)
+    .add_plugins(PanOrbitCameraPlugin)
     .insert_resource(WaterSettings {
       amplitude: 0.4,
       spawn_tiles: None,
       ..default()
     })
-    .add_plugin(WaterPlugin)
+    .add_plugins(WaterPlugin)
     // Wireframe
-    .add_plugin(WireframePlugin)
-    .add_startup_system(setup)
-    .add_system(toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
+    .add_plugins(WireframePlugin)
+    .add_systems(Startup, setup)
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
     .run();
 }
 

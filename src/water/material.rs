@@ -360,7 +360,7 @@ impl Plugin for WaterMaterialPlugin {
       Shader::from_wgsl
     );
 
-    app.add_plugin(MaterialPlugin::<WaterMaterial> {
+    app.add_plugins(MaterialPlugin::<WaterMaterial> {
       prepass_enabled: false,
       ..default()
     })

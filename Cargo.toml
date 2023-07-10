@@ -9,9 +9,6 @@ keywords = ["water", "ocean", "waves", "bevy"]
 repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
-[patch.crates-io]
-bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
-
 [features]
 default = ["webgl2", "embed_shaders", "depth_prepass"]
 

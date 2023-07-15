@@ -6,16 +6,14 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{app::AppExit, prelude::*};
+use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration};
 #[cfg(feature = "atmosphere")]
 use bevy::{
   time::Stopwatch,
-  utils::Duration,
 };
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
-#[cfg(feature = "atmosphere")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
@@ -43,20 +41,20 @@ fn main() {
         }),
         ..default()
       }).set(AssetPlugin {
-      watch_for_changes: None,//true,
+      // Tell the asset server to watch for asset changes on disk:
+      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
       ..default()
     }));
 
   #[cfg(feature = "debug")]
-  app.add_plugin(DebugLinesPlugin::with_depth_test(true))
-    .add_plugin(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+  app.add_plugins(DebugLinesPlugin::with_depth_test(true))
+    .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   #[cfg(feature = "depth_prepass")]
   app.insert_resource(Msaa::Off);
 
   // Simple pan/orbit camera.
-  #[cfg(feature = "atmosphere")]
-  app.add_plugin(PanOrbitCameraPlugin);
+  app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
   app.insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
@@ -315,9 +313,11 @@ fn setup(
   commands
     .spawn(DirectionalLightBundle {
       directional_light: DirectionalLight {
+        illuminance: 11127.65,
         shadows_enabled: true,
         ..default()
       },
+      transform: Transform::from_rotation(Quat::from_rotation_x(-0.340)),
       ..default()
     })
     .insert(Sun); // Marks the light as Sun
@@ -387,12 +387,11 @@ fn setup(
     },
   ));
 
-  #[cfg(feature = "atmosphere")]
   cam.insert(PanOrbitCamera {
     focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
-    radius: 4.0,
-    alpha: 3.14,
-    beta: 0.0,
+    radius: Some(4.0),
+    alpha: Some(3.14),
+    beta: Some(0.0),
     ..default()
   });
 

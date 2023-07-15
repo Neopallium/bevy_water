@@ -1,7 +1,11 @@
+#[cfg(feature = "depth_prepass")]
+use bevy::core_pipeline::prepass::DepthPrepass;
+
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{input::common_conditions, prelude::*};
+use bevy::{input::common_conditions, asset::ChangeWatcher, prelude::*, utils::Duration};
 
+#[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
 use bevy_water::material::WaterMaterial;
@@ -10,14 +14,13 @@ use bevy_water::*;
 const RADIUS: f32 = 10.0;
 
 fn main() {
+  let mut app = App::new();
 
-  App::new()
-    .add_plugins(DefaultPlugins.set(AssetPlugin {
+  app.add_plugins(DefaultPlugins.set(AssetPlugin {
       // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: true,
+      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
       ..default()
     }))
-    .add_plugins(SpectatorPlugin) // Simple movement for this example
     .insert_resource(WaterSettings {
       spawn_tiles: None,
       ..default()
@@ -26,8 +29,15 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
-    .run();
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+
+  #[cfg(feature = "depth_prepass")]
+  app.insert_resource(Msaa::Off);
+
+  #[cfg(feature = "atmosphere")]
+  app.add_plugins(SpectatorPlugin); // Simple movement for this example
+
+  app.run();
 }
 
 fn toggle_wireframe(
@@ -95,11 +105,21 @@ fn setup(
   });
 
   // camera
-  commands.spawn((Camera3dBundle {
+  let mut cam = commands.spawn((Camera3dBundle {
     transform: Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
   },
-    Spectator,
   ));
+
+  #[cfg(feature = "atmosphere")]
+  cam.insert(Spectator);
+
+  #[cfg(feature = "depth_prepass")]
+  {
+    // This will write the depth buffer to a texture that you can use in the main pass
+    cam.insert(DepthPrepass);
+  }
+  // This is just to keep the compiler happy when not using `depth_prepass` feature.
+  cam.insert(Name::new("Camera"));
 }

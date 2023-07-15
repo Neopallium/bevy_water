@@ -3,7 +3,7 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{input::common_conditions, prelude::*};
+use bevy::{input::common_conditions, asset::ChangeWatcher, prelude::*, utils::Duration};
 
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
@@ -14,10 +14,11 @@ const RADIUS: f32 = 10.0;
 
 fn main() {
 
-  App::new()
-    .add_plugins(DefaultPlugins.set(AssetPlugin {
+  let mut app = App::new();
+
+  app.add_plugins(DefaultPlugins.set(AssetPlugin {
       // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: true,
+      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
       ..default()
     }))
     // Simple pan/orbit camera.
@@ -31,8 +32,12 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)))
-    .run();
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+
+  #[cfg(feature = "depth_prepass")]
+  app.insert_resource(Msaa::Off);
+
+  app.run();
 }
 
 fn toggle_wireframe(
@@ -134,9 +139,9 @@ fn setup(
   },
     PanOrbitCamera {
       focus: Vec3::new(0.0, 0.0, 0.0),
-      radius: RADIUS + 15.0,
-      alpha: 3.14,
-      beta: 0.0,
+      radius: Some(RADIUS + 15.0),
+      alpha: Some(3.14),
+      beta: Some(0.0),
       ..default()
     },
   ));

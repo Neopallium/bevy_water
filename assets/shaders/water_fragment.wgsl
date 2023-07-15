@@ -59,7 +59,7 @@ fn fragment(
   let edge_color = water_bindings::material.edge_color;
 
 #ifdef MULTISAMPLED
-  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, in.sample_index);
+  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, sample_index);
 #else
   let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, 0u);
 #endif

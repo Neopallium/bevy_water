@@ -28,7 +28,5 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
 }
 
 fn uv_to_coord(uv: vec2<f32>) -> vec2<f32> {
-  // Invert the y UV coord.
-  let w_uv = vec2<f32>(uv.x, 1.0 - uv.y);
-  return material.coord_offset + (w_uv * material.coord_scale);
+  return material.coord_offset + (uv * material.coord_scale);
 }

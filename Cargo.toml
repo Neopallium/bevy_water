@@ -9,6 +9,12 @@ keywords = ["water", "ocean", "waves", "bevy"]
 repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
+exclude = [
+	"examples/*",
+	"assets/models/*",
+	"assets/textures/*",
+]
+
 [features]
 default = ["webgl2", "embed_shaders", "depth_prepass"]
 

@@ -15,6 +15,8 @@ cargo run --release --example ocean
 
 ## WASM examples
 
+[See the WebGPU and WebGL versions online here](https://neopallium.github.io/bevy_water/)
+
 ### Setup
 
 ```sh
@@ -27,13 +29,35 @@ cargo install wasm-bindgen-cli
 Following is an example for `ocean`. For other examples, change the `ocean` in the
 following commands.
 
+WebGPU:
 ```sh
-cargo build --release --example ocean --target wasm32-unknown-unknown \
-	--no-default-features --features embed_shaders
+RUSTFLAGS="--cfg=web_sys_unstable_apis" cargo build --release --example ocean \
+	--target wasm32-unknown-unknown \
+	--no-default-features --features webgpu,embed_shaders,depth_prepass
 
-wasm-bindgen --out-name wasm_example \
+echo "wasm-bindgen"
+wasm-bindgen --out-name ocean_webgpu \
   --out-dir examples/wasm/target \
   --target web target/wasm32-unknown-unknown/release/examples/ocean.wasm
+
+echo "Optimize wasm"
+wasm-opt --strip-debug --vacuum -Oz \
+	-o ./examples/wasm/target/ocean_webgpu_bg.wasm ./examples/wasm/target/ocean_webgpu_bg.wasm
+```
+
+WebGL2:
+```sh
+cargo build --release --example ocean --target wasm32-unknown-unknown \
+	--no-default-features --features webgl2,embed_shaders
+
+echo "wasm-bindgen"
+wasm-bindgen --out-name ocean_webgl2 \
+  --out-dir examples/wasm/target \
+  --target web target/wasm32-unknown-unknown/release/examples/ocean.wasm
+
+echo "Optimize wasm"
+wasm-opt --strip-debug --vacuum -Oz \
+	-o ./examples/wasm/target/ocean_webgl2_bg.wasm ./examples/wasm/target/ocean_webgl2_bg.wasm
 ```
 
 Then serve `examples/wasm` directory to browser. i.e.

@@ -1,5 +1,8 @@
 //! Showcases simple dynamic ocean material.
 
+#[cfg(feature = "depth_prepass")]
+use bevy::core_pipeline::prepass::DepthPrepass;
+
 use bevy::prelude::*;
 
 use bevy_water::*;
@@ -55,9 +58,16 @@ fn setup(
   });
 
   // camera
-  commands.spawn(Camera3dBundle {
+  let mut cam = commands.spawn(Camera3dBundle {
     transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
       .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
     ..default()
   });
+  #[cfg(feature = "depth_prepass")]
+  {
+    // This will write the depth buffer to a texture that you can use in the main pass
+    cam.insert(DepthPrepass);
+  }
+
+  cam.insert(Name::new("Camera"));
 }

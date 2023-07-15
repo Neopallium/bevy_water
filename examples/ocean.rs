@@ -4,6 +4,15 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
+#[cfg(not(feature = "atmosphere"))]
+use bevy::{
+    asset::LoadState,
+    core_pipeline::Skybox,
+    render::{
+        render_resource::{TextureViewDescriptor, TextureViewDimension},
+    },
+};
+
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration};
@@ -20,6 +29,9 @@ use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
+
+#[cfg(not(feature = "atmosphere"))]
+const SKYBOX_NAME: &str = "textures/table_mountain_2_puresky_4k_cubemap.jpg";
 
 const WATER_HEIGHT: f32 = 1.0;
 #[cfg(feature = "atmosphere")]
@@ -87,6 +99,12 @@ fn main() {
     ))
     .add_systems(Update, timer_control)
     .add_systems(Update, daylight_cycle);
+
+  #[cfg(not(feature = "atmosphere"))]
+  app.add_systems(
+      Update,
+      asset_loaded,
+  );
 
   app.run();
 }
@@ -302,6 +320,39 @@ fn update_ships(
   }
 }
 
+#[derive(Resource)]
+struct Cubemap {
+    is_loaded: bool,
+    name: String,
+    image_handle: Handle<Image>,
+}
+
+fn asset_loaded(
+    asset_server: Res<AssetServer>,
+    mut images: ResMut<Assets<Image>>,
+    mut cubemap: ResMut<Cubemap>,
+) {
+    if !cubemap.is_loaded
+        && asset_server.get_load_state(cubemap.image_handle.clone_weak()) == LoadState::Loaded
+    {
+        let image = images.get_mut(&cubemap.image_handle).unwrap();
+        // NOTE: PNGs do not have any metadata that could indicate they contain a cubemap texture,
+        // so they appear as one texture. The following code reconfigures the texture as necessary.
+        if image.texture_descriptor.array_layer_count() == 1 {
+            info!("Reinterpret 2D image {} into Cubemap", cubemap.name);
+            image.reinterpret_stacked_2d_as_array(
+                image.texture_descriptor.size.height / image.texture_descriptor.size.width,
+            );
+            image.texture_view_descriptor = Some(TextureViewDescriptor {
+                dimension: Some(TextureViewDimension::Cube),
+                ..default()
+            });
+        }
+
+        cubemap.is_loaded = true;
+    }
+}
+
 /// set up a simple 3D scene
 fn setup(
   mut commands: Commands,
@@ -369,6 +420,18 @@ fn setup(
       NotShadowCaster,
     ));
 
+  // Skybox cubemap
+  #[cfg(not(feature = "atmosphere"))]
+  let skybox_handle ={
+    let handle = asset_server.load(SKYBOX_NAME);
+    commands.insert_resource(Cubemap {
+        is_loaded: false,
+        name: SKYBOX_NAME.to_string(),
+        image_handle: handle.clone(),
+    });
+    handle
+  };
+
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
@@ -397,6 +460,11 @@ fn setup(
 
   #[cfg(feature = "atmosphere")]
   cam.insert(AtmosphereCamera::default());
+
+  #[cfg(not(feature = "atmosphere"))]
+  {
+    cam.insert(Skybox(skybox_handle));
+  }
 
   #[cfg(feature = "depth_prepass")]
   {

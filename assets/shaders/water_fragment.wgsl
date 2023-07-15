@@ -51,9 +51,9 @@ fn fragment(
 
   var output_color: vec4<f32> = water_bindings::material.base_color;
 
+  let deep_color = water_bindings::material.deep_color;
 #ifdef USE_DEPTH
   let water_clarity = water_bindings::material.clarity;
-  let deep_color = water_bindings::material.deep_color;
   let shallow_color = water_bindings::material.shallow_color;
   let edge_scale = water_bindings::material.edge_scale;
   let edge_color = water_bindings::material.edge_color;
@@ -70,6 +70,8 @@ fn fragment(
   let depth_color = vec4<f32>(mix(deep_color.xyz, shallow_color.xyz, beers_law), 1.0 - beers_law);
   let water_color = mix(edge_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));
   output_color = output_color * water_color;
+#else
+  output_color = output_color * deep_color;
 #endif
   //let foam_color = water_bindings::material.edge_color;
   //let foam = mix(foam_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));

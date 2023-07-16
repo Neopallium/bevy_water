@@ -7,7 +7,7 @@ Dynamic water material (with waves) for [Bevy](https://bevyengine.org/).
 A fleet of pirate ships moving with the waves.
 
 ```
-cargo run --release --example ocean
+cargo run --release --example pirates
 ```
 ![](showcase.webp)
 
@@ -15,7 +15,7 @@ cargo run --release --example ocean
 
 ## WASM examples
 
-[See the WebGPU and WebGL versions online here](https://neopallium.github.io/bevy_water/)
+[See the WebGPU and WebGL versions online here](https://neopallium.github.io/bevy_water/pirates.html)
 
 ### Setup
 
@@ -26,38 +26,38 @@ cargo install wasm-bindgen-cli
 
 ### Build & Run
 
-Following is an example for `ocean`. For other examples, change the `ocean` in the
+Following is an example for `pirates`. For other examples, change the `pirates` in the
 following commands.
 
 WebGPU:
 ```sh
-RUSTFLAGS="--cfg=web_sys_unstable_apis" cargo build --release --example ocean \
+RUSTFLAGS="--cfg=web_sys_unstable_apis" cargo build --release --example pirates \
 	--target wasm32-unknown-unknown \
 	--no-default-features --features webgpu,embed_shaders,depth_prepass
 
 echo "wasm-bindgen"
-wasm-bindgen --out-name ocean_webgpu \
+wasm-bindgen --out-name pirates_webgpu \
   --out-dir examples/wasm/target \
-  --target web target/wasm32-unknown-unknown/release/examples/ocean.wasm
+  --target web target/wasm32-unknown-unknown/release/examples/pirates.wasm
 
 echo "Optimize wasm"
 wasm-opt --strip-debug --vacuum -Oz \
-	-o ./examples/wasm/target/ocean_webgpu_bg.wasm ./examples/wasm/target/ocean_webgpu_bg.wasm
+	-o ./examples/wasm/target/pirates_webgpu_bg.wasm ./examples/wasm/target/pirates_webgpu_bg.wasm
 ```
 
 WebGL2:
 ```sh
-cargo build --release --example ocean --target wasm32-unknown-unknown \
+cargo build --release --example pirates --target wasm32-unknown-unknown \
 	--no-default-features --features webgl2,embed_shaders
 
 echo "wasm-bindgen"
-wasm-bindgen --out-name ocean_webgl2 \
+wasm-bindgen --out-name pirates_webgl2 \
   --out-dir examples/wasm/target \
-  --target web target/wasm32-unknown-unknown/release/examples/ocean.wasm
+  --target web target/wasm32-unknown-unknown/release/examples/pirates.wasm
 
 echo "Optimize wasm"
 wasm-opt --strip-debug --vacuum -Oz \
-	-o ./examples/wasm/target/ocean_webgl2_bg.wasm ./examples/wasm/target/ocean_webgl2_bg.wasm
+	-o ./examples/wasm/target/pirates_webgl2_bg.wasm ./examples/wasm/target/pirates_webgl2_bg.wasm
 ```
 
 Then serve `examples/wasm` directory to browser. i.e.

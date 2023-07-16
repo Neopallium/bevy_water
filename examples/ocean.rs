@@ -62,9 +62,6 @@ fn main() {
   app.add_plugins(DebugLinesPlugin::with_depth_test(true))
     .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
-  #[cfg(feature = "depth_prepass")]
-  app.insert_resource(Msaa::Off);
-
   // Simple pan/orbit camera.
   app.add_plugins(PanOrbitCameraPlugin);
 

@@ -6,7 +6,12 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 #[cfg(not(feature = "atmosphere"))]
 use bevy::{
-  core_pipeline::Skybox,
+  core_pipeline::{
+    Skybox,
+    experimental::taa::{
+      TemporalAntiAliasBundle, TemporalAntiAliasPlugin,
+    },
+  },
   render::{
     mesh::VertexAttributeValues,
     render_resource::TextureFormat,
@@ -55,7 +60,8 @@ fn main() {
       // Tell the asset server to watch for asset changes on disk:
       watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
       ..default()
-    }));
+    }))
+    .add_plugins(TemporalAntiAliasPlugin);
 
   #[cfg(feature = "debug")]
   app.add_plugins(DebugLinesPlugin::with_depth_test(true))
@@ -433,6 +439,7 @@ fn setup(
         ),
         ..default()
     },
+    TemporalAntiAliasBundle::default(),
   ));
 
   cam.insert(PanOrbitCamera {

@@ -31,15 +31,7 @@ fn ndc_depth_to_linear(ndc_depth: f32) -> f32 {
 fn fragment(
 	in: MeshVertexOutput,
   @builtin(front_facing) is_front: bool,
-#ifdef USE_DEPTH
-#ifdef MULTISAMPLED
-  @builtin(sample_index) sample_index: u32,
-#endif
-#endif
 ) -> @location(0) vec4<f32> {
-#ifndef MULTISAMPLED
-  let sample_index = 0u;
-#endif
   var world_position: vec4<f32> = in.world_position;
   let w_pos = water_fn::uv_to_coord(in.uv);
   // Calculate normal.
@@ -58,11 +50,7 @@ fn fragment(
   let edge_scale = water_bindings::material.edge_scale;
   let edge_color = water_bindings::material.edge_color;
 
-#ifdef MULTISAMPLED
-  let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, sample_index);
-#else
   let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, 0u);
-#endif
   let z_depth_buffer_view = ndc_depth_to_linear(z_depth_buffer_ndc);
   let z_fragment_view = ndc_depth_to_linear(in.position.z);
   let depth_diff_view = z_fragment_view - z_depth_buffer_view;

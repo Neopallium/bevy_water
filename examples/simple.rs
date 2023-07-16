@@ -20,9 +20,6 @@ fn main() {
     .add_plugins(WaterPlugin)
     .add_systems(Startup, setup);
 
-  #[cfg(feature = "depth_prepass")]
-  app.insert_resource(Msaa::Off);
-
   app.run();
 }
 

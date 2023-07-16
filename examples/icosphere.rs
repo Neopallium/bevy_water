@@ -34,9 +34,6 @@ fn main() {
     .add_systems(Startup, setup)
     .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
 
-  #[cfg(feature = "depth_prepass")]
-  app.insert_resource(Msaa::Off);
-
   app.run();
 }
 

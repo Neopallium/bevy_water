@@ -5,11 +5,14 @@ pub mod material;
 use material::*;
 
 pub const WATER_SIZE: u32 = 256;
+pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;
 
 #[derive(Resource, Clone, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct WaterSettings {
+  /// StandardMaterial setting.
+  pub alpha_mode: AlphaMode,
   /// Base water height.
   pub height: f32,
   /// Wave amplitude.
@@ -38,6 +41,7 @@ pub struct WaterSettings {
 impl Default for WaterSettings {
   fn default() -> Self {
     Self {
+      alpha_mode: AlphaMode::Blend,
       height: 1.0,
       amplitude: 1.0,
       clarity: 0.25,
@@ -77,6 +81,10 @@ impl WaterTileBundle {
     height: f32,
     offset: Vec2,
   ) -> Self {
+    // The tile position is based on the center of the tile,
+    // so we need to add `WATER_HALF_SIZE` so the tile corner absolute position
+    // will match `coord` in the water shader.
+    let tile_pos = offset + WATER_HALF_SIZE;
     Self {
       name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
       tile: WaterTile {
@@ -85,7 +93,7 @@ impl WaterTileBundle {
       mesh: MaterialMeshBundle {
         mesh,
         material,
-        transform: Transform::from_xyz(offset.x, height, offset.y),
+        transform: Transform::from_xyz(tile_pos.x, height, tile_pos.y),
         ..default()
       },
     }
@@ -110,7 +118,7 @@ fn setup_water(
   let mesh: Handle<Mesh> = meshes.add(
     shape::Plane {
       size: WATER_SIZE as f32,
-      subdivisions: WATER_SIZE as u32 / 10,
+      subdivisions: WATER_SIZE as u32 / 4,
     }
     .into(),
   );
@@ -121,12 +129,13 @@ fn setup_water(
       ..default()
     })
     .with_children(|parent| {
-      let offset = (WATER_SIZE * WATER_GRID_SIZE) as f32 / 2.0;
+      let grid_center = (WATER_SIZE * WATER_GRID_SIZE) as f32 / 2.0;
       for x in 0..grid.x {
         for y in 0..grid.y {
-          let x = (x * WATER_SIZE) as f32 - offset;
-          let y = (y * WATER_SIZE) as f32 - offset;
-          let tile_offset = Vec2::new(x, y);
+          let x = (x * WATER_SIZE) as f32 - grid_center;
+          let y = (y * WATER_SIZE) as f32 - grid_center;
+          // UV starts at (0,0) at the corner.
+          let coord_offset = Vec2::new(x, y);
           // Water material.
           let material = materials.add(WaterMaterial {
             amplitude: settings.amplitude,
@@ -136,13 +145,13 @@ fn setup_water(
             shallow_color: settings.shallow_color,
             edge_color: settings.edge_color,
             edge_scale: settings.edge_scale,
-            coord_offset: tile_offset,
+            coord_offset,
             coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
             ..default()
           });
 
           parent.spawn((
-            WaterTileBundle::new(mesh.clone(), material, water_height, tile_offset),
+            WaterTileBundle::new(mesh.clone(), material, water_height, coord_offset),
             NotShadowCaster,
           ));
         }
@@ -156,6 +165,7 @@ fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<W
     return;
   }
   for (_, mat) in materials.iter_mut() {
+    mat.alpha_mode = settings.alpha_mode;
     mat.amplitude = settings.amplitude;
     mat.base_color = settings.base_color;
     mat.clarity = settings.clarity;

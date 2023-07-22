@@ -16,6 +16,8 @@ fn mix(x: f32, y: f32, a: f32) -> f32 {
 }
 
 fn random2d(v: Vec2) -> f32 {
+  // Note: the large values here seem to cause some precision differences between the shader
+  // and this Rust code.
 	return fract(v.dot(Vec2::new(12.9898, 78.233)).sin() * 43758.5453123);
 }
 
@@ -54,7 +56,7 @@ fn noise2(v: Vec2) -> f32 {
   return vnoise2d(v);
 }
 
-const M2: Mat2 = Mat2::from_cols_array(&[0.8, 0.6, -0.6, 0.8]);
+const M2: Mat2 = Mat2::from_cols(Vec2::new(0.8, 0.6), Vec2::new(-0.6, 0.8));
 fn fbm(mut p: Vec2) -> f32 {
   let mut f = 0.;
   f = f + 0.5000 * noise2(p); p = M2 * p * 2.02;

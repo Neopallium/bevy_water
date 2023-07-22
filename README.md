@@ -11,7 +11,7 @@ cargo run --release --example pirates
 ```
 ![](showcase.webp)
 
-[Pirate ship from asset pack CC0](https://www.kenney.nl/assets/pirate-kit)
+[Dutch ship model from polyhaven (CC0)](https://polyhaven.com/a/dutch_ship_medium)
 
 ## WASM examples
 

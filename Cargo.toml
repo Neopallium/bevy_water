@@ -69,7 +69,7 @@ bevy = { version = "0.11.0", default-features = false , features = [
   "default_font",
 ] }
 bevy-inspector-egui = { version = "0.19" }
-#bevy_atmosphere = { version = "0.6", optional = true }
+bevy_atmosphere = { version = "0.7" }
 bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-#bevy_spectator = { version = "0.2", optional = true }
+bevy_spectator = { version = "0.3" }
 bevy_panorbit_camera = { version = "0.6", features = ["bevy_egui"] }

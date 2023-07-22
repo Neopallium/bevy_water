@@ -5,9 +5,12 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 #[cfg(not(feature = "atmosphere"))]
+use bevy::core_pipeline::Skybox;
+
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{
+  app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration,
   core_pipeline::{
-    Skybox,
     experimental::taa::{
       TemporalAntiAliasBundle, TemporalAntiAliasPlugin,
     },
@@ -17,9 +20,6 @@ use bevy::{
     render_resource::TextureFormat,
   },
 };
-
-use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration};
 #[cfg(feature = "atmosphere")]
 use bevy::{
   time::Stopwatch,

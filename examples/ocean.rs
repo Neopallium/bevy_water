@@ -318,12 +318,14 @@ fn update_ships(
 }
 
 #[derive(Resource)]
+#[cfg(not(feature = "atmosphere"))]
 struct Cubemap {
     is_loaded: bool,
     name: String,
     image_handle: Handle<Image>,
 }
 
+#[cfg(not(feature = "atmosphere"))]
 fn asset_loaded(
     asset_server: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,

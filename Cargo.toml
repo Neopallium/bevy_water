@@ -16,7 +16,7 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass"]
+default = ["webgl2", "embed_shaders", "depth_prepass", "atmosphere"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []

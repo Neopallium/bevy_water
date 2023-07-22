@@ -2,7 +2,7 @@
 
 echo "Build ocean WebGPU"
 RUSTFLAGS="--cfg=web_sys_unstable_apis" cargo build --release --example ocean --target wasm32-unknown-unknown \
-	--no-default-features --features webgpu,embed_shaders,depth_prepass
+	--no-default-features --features webgpu,embed_shaders,depth_prepass,atmosphere
 
 echo "wasm-bindgen"
 wasm-bindgen --out-name ocean_webgpu --out-dir ./ --target web ./target/wasm32-unknown-unknown/release/examples/ocean.wasm

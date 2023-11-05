@@ -24,7 +24,7 @@ pub struct ImageReformat {
 }
 
 impl ImageReformat {
-  pub fn new(commands: &mut Commands, asset_server: &AssetServer, name: &str, action: ImageAction) -> Handle<Image> {
+  pub fn new(commands: &mut Commands, asset_server: &AssetServer, name: &'static str, action: ImageAction) -> Handle<Image> {
     let image = asset_server.load(name);
     commands.spawn(Self {
       name: name.to_string(),
@@ -34,16 +34,16 @@ impl ImageReformat {
     image
   }
 
-  pub fn reformat(commands: &mut Commands, asset_server: &AssetServer, name: &str, format: TextureFormat) -> Handle<Image> {
+  pub fn reformat(commands: &mut Commands, asset_server: &AssetServer, name: &'static str, format: TextureFormat) -> Handle<Image> {
     Self::new(commands, asset_server, name, ImageAction::Reformat(format))
   }
 
-  pub fn cubemap(commands: &mut Commands, asset_server: &AssetServer, name: &str) -> Handle<Image> {
+  pub fn cubemap(commands: &mut Commands, asset_server: &AssetServer, name: &'static str) -> Handle<Image> {
     Self::new(commands, asset_server, name, ImageAction::Cubemap)
   }
 
   /// Change Sampler UV address mode to repeat.
-  pub fn uv_repeat(commands: &mut Commands, asset_server: &AssetServer, name: &str) -> Handle<Image> {
+  pub fn uv_repeat(commands: &mut Commands, asset_server: &AssetServer, name: &'static str) -> Handle<Image> {
     let sampler = SamplerDescriptor {
       address_mode_u: AddressMode::Repeat,
       address_mode_v: AddressMode::Repeat,
@@ -82,7 +82,7 @@ fn reformat_image(
         }
         ImageAction::Sampler(sampler) => {
           info!("Change image sampler {}", reformat.name);
-          image.sampler_descriptor = ImageSampler::Descriptor(sampler.clone());
+          image.sampler = ImageSampler::Descriptor(sampler.clone().into());
         }
       }
       commands.entity(entity).despawn();

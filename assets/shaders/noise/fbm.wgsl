@@ -3,7 +3,7 @@
 //
 #define_import_path bevy_water::noise::fbm
 
-#import bevy_water::noise::vnoise vnoise2d
+#import bevy_water::noise::vnoise::vnoise2d
 
 fn fbm(v2: vec2<f32>) -> f32 {
   let m2 = mat2x2<f32>(vec2<f32>(0.8, 0.6), vec2<f32>(-0.6, 0.8));

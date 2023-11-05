@@ -1,36 +1,37 @@
-#import bevy_pbr::mesh_functions as mesh_functions
-#import bevy_pbr::skinning
-#import bevy_pbr::mesh_bindings       mesh
-#import bevy_pbr::mesh_vertex_output  MeshVertexOutput
+#import bevy_pbr::{
+	mesh_functions,
+	skinning,
+	view_transformations::position_world_to_clip,
+}
+#import bevy_render::instance_index::get_instance_index
 
 #import bevy_water::water_functions as water_fn
 
-struct Vertex {
-  @location(0) position: vec3<f32>,
-  @location(1) normal: vec3<f32>,
-  @location(2) uv: vec2<f32>,
-#ifdef VERTEX_TANGENTS
-  @location(3) tangent: vec4<f32>,
+#ifdef PREPASS_PIPELINE
+#import bevy_pbr::prepass_io::{Vertex, VertexOutput}
+#else
+#import bevy_pbr::forward_io::{Vertex, VertexOutput}
 #endif
-#ifdef VERTEX_COLORS
-  @location(4) color: vec4<f32>,
-#endif
-#ifdef SKINNED
-  @location(5) joint_indices: vec4<u32>,
-  @location(6) joint_weights: vec4<f32>,
-#endif
-};
 
 @vertex
-fn vertex(vertex: Vertex) -> MeshVertexOutput {
-  var out: MeshVertexOutput;
+fn vertex(vertex: Vertex) -> VertexOutput {
+  var out: VertexOutput;
 
 #ifdef SKINNED
-  var model = bevy_pbr::skinning::skin_model(vertex.joint_indices, vertex.joint_weights);
-  out.world_normal = bevy_pbr::skinning::skin_normals(model, vertex.normal);
+  var model = skinning::skin_model(vertex.joint_indices, vertex.joint_weights);
 #else
-  var model = mesh.model;
-  out.world_normal = mesh_functions::mesh_normal_local_to_world(vertex.normal);
+  var model = mesh_functions::get_model_matrix(vertex.instance_index);
+#endif
+
+#ifdef VERTEX_UVS
+#ifdef SKINNED
+  out.world_normal = skinning::skin_normals(model, vertex.normal);
+#else
+  out.world_normal = mesh_functions::mesh_normal_local_to_world(
+		vertex.normal,
+		get_instance_index(vertex.instance_index)
+	);
+#endif
 #endif
 
   let world_position = mesh_functions::mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
@@ -40,18 +41,26 @@ fn vertex(vertex: Vertex) -> MeshVertexOutput {
   let height = water_fn::get_wave_height(w_pos);
 
   out.world_position = world_position + vec4<f32>((out.world_normal * height), 0.);
-  out.position = mesh_functions::mesh_position_world_to_clip(out.world_position);
+  out.position = position_world_to_clip(out.world_position.xyz);
 
 #ifdef VERTEX_UVS
   out.uv = vertex.uv;
 #endif
 
 #ifdef VERTEX_TANGENTS
-  out.world_tangent = mesh_functions::mesh_tangent_local_to_world(model, vertex.tangent);
+  out.world_tangent = mesh_functions::mesh_tangent_local_to_world(
+		model,
+		vertex.tangent,
+		get_instance_index(vertex.instance_index)
+	);
 #endif
 
 #ifdef VERTEX_COLORS
   out.color = vertex.color;
+#endif
+
+#ifdef VERTEX_OUTPUT_INSTANCE_INDEX
+	out.instance_index = get_instance_index(vertex.instance_index);
 #endif
 
   return out;

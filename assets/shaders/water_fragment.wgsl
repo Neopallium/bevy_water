@@ -1,26 +1,36 @@
-#import bevy_pbr::mesh_view_bindings  view
-#import bevy_pbr::mesh_bindings       mesh
-#import bevy_pbr::mesh_vertex_output  MeshVertexOutput
+#import bevy_pbr::{
+	pbr_functions,
+	pbr_bindings,
+	pbr_types,
+	prepass_utils,
+	mesh_bindings::mesh,
+	mesh_view_bindings::view,
+	parallax_mapping::parallaxed_uv,
+}
 
-#import bevy_pbr::pbr_functions as pbr_functions
-#import bevy_pbr::pbr_bindings as pbr_bindings
-#import bevy_pbr::pbr_types as pbr_types
-#ifdef USE_DEPTH
-#import bevy_pbr::prepass_utils
+#ifdef PREPASS_PIPELINE
+#import bevy_pbr::{
+	prepass_io::{VertexOutput, FragmentOutput},
+	pbr_deferred_functions::deferred_output,
+}
+#else
+#import bevy_pbr::{
+	forward_io::{VertexOutput, FragmentOutput},
+	pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing},
+	pbr_types::STANDARD_MATERIAL_FLAGS_UNLIT_BIT,
+}
 #endif
-
-#import bevy_pbr::mesh_vertex_output       MeshVertexOutput
-#import bevy_pbr::mesh_bindings            mesh
-#import bevy_pbr::mesh_view_bindings       view, fog, screen_space_ambient_occlusion_texture
-#import bevy_pbr::mesh_view_types          FOG_MODE_OFF
-#import bevy_core_pipeline::tonemapping    screen_space_dither, powsafe, tone_mapping
-#import bevy_pbr::parallax_mapping         parallaxed_uv
 
 #ifdef SCREEN_SPACE_AMBIENT_OCCLUSION
-#import bevy_pbr::gtao_utils gtao_multibounce
+#import bevy_pbr::mesh_view_bindings::screen_space_ambient_occlusion_texture
+#import bevy_pbr::gtao_utils::gtao_multibounce
 #endif
 
-#import bevy_water::water_bindings as water_bindings
+#import bevy_core_pipeline::tonemapping::{
+	screen_space_dither, powsafe, tone_mapping,
+}
+
+#import bevy_water::water_bindings
 #import bevy_water::water_functions as water_fn
 
 fn ndc_depth_to_linear(ndc_depth: f32) -> f32 {
@@ -29,9 +39,11 @@ fn ndc_depth_to_linear(ndc_depth: f32) -> f32 {
 
 @fragment
 fn fragment(
-	in: MeshVertexOutput,
+	in: VertexOutput,
   @builtin(front_facing) is_front: bool,
-) -> @location(0) vec4<f32> {
+) -> FragmentOutput {
+	let double_sided = (water_bindings::material.flags & pbr_types::STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT) != 0u;
+
   var world_position: vec4<f32> = in.world_position;
   let w_pos = water_fn::uv_to_coord(in.uv);
   // Calculate normal.
@@ -100,7 +112,7 @@ fn fragment(
 
   // Prepare a 'processed' StandardMaterial by sampling all textures to resolve
   // the material members
-  var pbr_input: pbr_functions::PbrInput;
+  var pbr_input: pbr_types::PbrInput;
 
   pbr_input.material.base_color = output_color;
   pbr_input.material.reflectance = water_bindings::material.reflectance;
@@ -150,7 +162,7 @@ fn fragment(
 
     pbr_input.world_normal = pbr_functions::prepare_world_normal(
       world_normal,
-      (water_bindings::material.flags & pbr_types::STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT) != 0u,
+			double_sided,
       is_front,
     );
 
@@ -162,6 +174,8 @@ fn fragment(
     pbr_input.N = pbr_functions::apply_normal_mapping(
       water_bindings::material.flags,
       pbr_input.world_normal,
+			double_sided,
+			is_front,
 #ifdef VERTEX_TANGENTS
 #ifdef STANDARDMATERIAL_NORMAL_MAP
       in.world_tangent,
@@ -177,38 +191,28 @@ fn fragment(
     pbr_input.V = V;
     pbr_input.occlusion = occlusion;
 
-    pbr_input.flags = mesh.flags;
-
-    output_color = pbr_functions::pbr(pbr_input);
-  } else {
-    output_color = pbr_functions::alpha_discard(pbr_input.material, output_color);
+    pbr_input.flags = mesh[in.instance_index].flags;
   }
 
-  // fog
-  if (fog.mode != FOG_MODE_OFF && (water_bindings::material.flags & pbr_types::STANDARD_MATERIAL_FLAGS_FOG_ENABLED_BIT) != 0u) {
-    output_color = pbr_functions::apply_fog(fog, output_color, world_position.xyz, view.world_position.xyz);
-  }
+  pbr_input.material.base_color = pbr_functions::alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
-#ifdef TONEMAP_IN_SHADER
-  output_color = tone_mapping(output_color, view.color_grading);
-#ifdef DEBAND_DITHER
-  var output_rgb = output_color.rgb;
-  output_rgb = powsafe(output_rgb, 1.0 / 2.2);
-  output_rgb = output_rgb + screen_space_dither(in.position.xy);
-  // This conversion back to linear space is required because our output texture format is
-  // SRGB; the GPU will assume our output is linear and will apply an SRGB conversion.
-  output_rgb = powsafe(output_rgb, 2.2);
-  output_color = vec4(output_rgb, output_color.a);
+#ifdef PREPASS_PIPELINE
+	let out = deferred_output(in, pbr_input);
+#else
+	var out: FragmentOutput;
+  if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) == 0u {
+		out.color = apply_pbr_lighting(pbr_input);
+	} else {
+		out.color = pbr_input.material.base_color;
+	}
 #endif
-#endif
-#ifdef PREMULTIPLY_ALPHA
-  output_color = pbr_functions::premultiply_alpha(water_bindings::material.flags, output_color);
-#endif
+
+	out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
   // show grid
   //let f_pos = step(fract((w_pos / 10.06274)), vec2<f32>(0.995));
   //let grid = step(f_pos.x + f_pos.y, 1.00);
   //output_color = output_color + vec4<f32>(grid, grid, grid, 0.00);
 
-  return output_color;
+  return out;
 }

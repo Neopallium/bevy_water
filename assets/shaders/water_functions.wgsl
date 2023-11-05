@@ -1,9 +1,9 @@
 #define_import_path bevy_water::water_functions
 
-#import bevy_pbr::mesh_view_bindings globals
+#import bevy_pbr::mesh_view_bindings::globals
 
-#import bevy_water::water_bindings material
-#import bevy_water::noise::fbm fbm
+#import bevy_water::water_bindings::material
+#import bevy_water::noise::fbm::fbm
 
 fn wave(p: vec2<f32>) -> f32 {
   let time = globals.time * .5 + 23.0;

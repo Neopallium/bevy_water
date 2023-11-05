@@ -6,7 +6,7 @@ use bevy::{
   render::{mesh::MeshVertexBufferLayout, render_asset::*, render_resource::*},
 };
 
-#[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "ea9ad5fe-a9ce-4ff1-aea8-d756ed456c46"]
 #[bind_group_data(WaterMaterialKey)]
 #[uniform(0, WaterMaterialUniform)]
@@ -207,30 +207,30 @@ impl From<&WaterMaterial> for WaterMaterialKey {
   }
 }
 
-pub const NOISE_FBM_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x47c86614dedb33fe);
+pub const NOISE_FBM_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0x47c86614dedb33fe);
 
-pub const NOISE_RANDOM_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x339ea286e4c7be3e);
+pub const NOISE_RANDOM_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0x339ea286e4c7be3e);
 
-pub const NOISE_VNOISE_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x2cb48f03a340aedc);
+pub const NOISE_VNOISE_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0x2cb48f03a340aedc);
 
-pub const WATER_BINDINGS_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xa9010bab18132e4b);
+pub const WATER_BINDINGS_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0xa9010bab18132e4b);
 
-pub const WATER_FUNCTIONS_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xb73bf2f50994c394);
+pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0xb73bf2f50994c394);
 
-pub const WATER_VERTEX_SHADER_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xcea5177230c961ac);
+pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0xcea5177230c961ac);
 
-pub const WATER_FRAGMENT_SHADER_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0xbe72b1f6760558cb);
+pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0xbe72b1f6760558cb);
 
 #[cfg(feature = "embed_shaders")]
 fn water_fragment_shader() -> ShaderRef {
-  WATER_FRAGMENT_SHADER_HANDLE.typed().into()
+  WATER_FRAGMENT_SHADER_HANDLE.into()
 }
 
 #[cfg(not(feature = "embed_shaders"))]
@@ -240,7 +240,7 @@ fn water_fragment_shader() -> ShaderRef {
 
 #[cfg(feature = "embed_shaders")]
 fn water_vertex_shader() -> ShaderRef {
-  WATER_VERTEX_SHADER_HANDLE.typed().into()
+  WATER_VERTEX_SHADER_HANDLE.into()
 }
 
 #[cfg(not(feature = "embed_shaders"))]
@@ -278,7 +278,7 @@ impl Material for WaterMaterial {
   }
 
   fn prepass_fragment_shader() -> ShaderRef {
-    PBR_PREPASS_SHADER_HANDLE.typed().into()
+    PBR_PREPASS_SHADER_HANDLE.into()
   }
 
   fn vertex_shader() -> ShaderRef {

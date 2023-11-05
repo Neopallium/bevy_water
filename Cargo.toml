@@ -16,7 +16,7 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass", "atmosphere"]
+default = ["webgl2", "embed_shaders", "depth_prepass"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []
@@ -30,8 +30,11 @@ file_watcher = [
 # Enable debug lines in examples.
 debug = []
 
-# Enable bevy_atmosphere support.
+# Enable bevy_atmosphere support in the examples.
 atmosphere = []
+
+# Enable bevy_panorbit_camera support in the examples.
+panorbit = []
 
 # Enable DepthPrepass in examples.
 depth_prepass = []

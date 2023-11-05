@@ -15,7 +15,7 @@ use bevy::{
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration};
+use bevy::{app::AppExit, prelude::*};
 #[cfg(feature = "atmosphere")]
 use bevy::{
   time::Stopwatch,
@@ -23,6 +23,7 @@ use bevy::{
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
+#[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
@@ -52,17 +53,15 @@ fn main() {
           ..Default::default()
         }),
         ..default()
-      }).set(AssetPlugin {
-      // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-      ..default()
-    }));
+      }).set(AssetPlugin::default())
+    );
 
   #[cfg(feature = "debug")]
   app.add_plugins(DebugLinesPlugin::with_depth_test(true))
     .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   // Simple pan/orbit camera.
+  #[cfg(feature = "panorbit")]
   app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
@@ -332,7 +331,7 @@ fn asset_loaded(
     mut cubemap: ResMut<Cubemap>,
 ) {
     if !cubemap.is_loaded
-        && asset_server.get_load_state(cubemap.image_handle.clone_weak()) == LoadState::Loaded
+        && asset_server.get_load_state(cubemap.image_handle.clone_weak()) == Some(LoadState::Loaded)
     {
         let image = images.get_mut(&cubemap.image_handle).unwrap();
         // NOTE: PNGs do not have any metadata that could indicate they contain a cubemap texture,
@@ -434,6 +433,8 @@ fn setup(
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
+      transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
+        .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
     FogSettings {
@@ -449,6 +450,7 @@ fn setup(
     },
   ));
 
+  #[cfg(feature = "panorbit")]
   cam.insert(PanOrbitCamera {
     focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
     radius: Some(4.0),

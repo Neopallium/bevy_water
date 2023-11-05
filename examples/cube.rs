@@ -3,12 +3,12 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{input::common_conditions, asset::ChangeWatcher, prelude::*, utils::Duration};
+use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
-use bevy_water::material::WaterMaterial;
+use bevy_water::material::{WaterMaterial, StandardWaterMaterial};
 use bevy_water::*;
 
 const CUBE_SIZE: f32 = 10.0;
@@ -16,11 +16,7 @@ const CUBE_SIZE: f32 = 10.0;
 fn main() {
   let mut app = App::new();
 
-  app.add_plugins(DefaultPlugins.set(AssetPlugin {
-      // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-      ..default()
-    }))
+  app.add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
       spawn_tiles: None,
       ..default()
@@ -60,7 +56,7 @@ fn setup(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<WaterMaterial>>,
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
@@ -70,10 +66,13 @@ fn setup(
     .into(),
   );
   // Water material.
-  let material = materials.add(WaterMaterial {
-    amplitude: settings.amplitude,
-    coord_scale: Vec2::new(256.0, 256.0),
-    ..default()
+  let material = materials.add(StandardWaterMaterial {
+    base: default(),
+    extension: WaterMaterial {
+      amplitude: settings.amplitude,
+      coord_scale: Vec2::new(256.0, 256.0),
+      ..default()
+    },
   });
 
   commands

@@ -9,7 +9,7 @@ use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{
-  app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration,
+  app::AppExit, prelude::*, utils::Duration,
   core_pipeline::{
     experimental::taa::{
       TemporalAntiAliasBundle, TemporalAntiAliasPlugin,
@@ -27,6 +27,7 @@ use bevy::{
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
+#[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
@@ -56,11 +57,8 @@ fn main() {
           ..Default::default()
         }),
         ..default()
-      }).set(AssetPlugin {
-      // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-      ..default()
-    }))
+      }).set(AssetPlugin::default())
+    )
     .add_plugins(TemporalAntiAliasPlugin);
 
   #[cfg(feature = "debug")]
@@ -68,6 +66,7 @@ fn main() {
     .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   // Simple pan/orbit camera.
+  #[cfg(feature = "panorbit")]
   app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
@@ -426,6 +425,8 @@ fn setup(
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
+      transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
+        .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
     FogSettings {
@@ -442,6 +443,7 @@ fn setup(
     TemporalAntiAliasBundle::default(),
   ));
 
+  #[cfg(feature = "panorbit")]
   cam.insert(PanOrbitCamera {
     focus: Vec3::new(26.0, WATER_HEIGHT + 5.0, -11.0),
     radius: Some(60.0),

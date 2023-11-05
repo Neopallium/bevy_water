@@ -3,11 +3,12 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::{input::common_conditions, asset::ChangeWatcher, prelude::*, utils::Duration};
+use bevy::{input::common_conditions, prelude::*};
 
+#[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
-use bevy_water::material::WaterMaterial;
+use bevy_water::material::{WaterMaterial, StandardWaterMaterial};
 use bevy_water::*;
 
 const RADIUS: f32 = 10.0;
@@ -16,14 +17,13 @@ fn main() {
 
   let mut app = App::new();
 
-  app.add_plugins(DefaultPlugins.set(AssetPlugin {
-      // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-      ..default()
-    }))
-    // Simple pan/orbit camera.
-    .add_plugins(PanOrbitCameraPlugin)
-    .insert_resource(WaterSettings {
+  app.add_plugins(DefaultPlugins);
+
+  // Simple pan/orbit camera.
+  #[cfg(feature = "panorbit")]
+  app.add_plugins(PanOrbitCameraPlugin);
+
+  app.insert_resource(WaterSettings {
       amplitude: 0.4,
       spawn_tiles: None,
       ..default()
@@ -60,7 +60,7 @@ fn setup(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut water_materials: ResMut<Assets<WaterMaterial>>,
+  mut water_materials: ResMut<Assets<StandardWaterMaterial>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
@@ -72,11 +72,14 @@ fn setup(
     .try_into().expect("Icosphere"),
   );
   // Water material.
-  let material = water_materials.add(WaterMaterial {
-    amplitude: settings.amplitude,
-    clarity: 0.05,
-    coord_scale: Vec2::new(256.0, 256.0),
-    ..default()
+  let material = water_materials.add(StandardWaterMaterial {
+    base: default(),
+    extension: WaterMaterial {
+      amplitude: settings.amplitude,
+      clarity: 0.05,
+      coord_scale: Vec2::new(256.0, 256.0),
+      ..default()
+    },
   });
 
   // Spawn water entity.
@@ -131,6 +134,13 @@ fn setup(
   });
 
   // camera
+  #[cfg(not(feature = "panorbit"))]
+  let mut cam = commands.spawn(Camera3dBundle {
+    transform: Transform::from_xyz(0.0, RADIUS + 15.0, 0.0)
+      .looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+    ..default()
+  });
+  #[cfg(feature = "panorbit")]
   let mut cam = commands.spawn((Camera3dBundle {
     ..default()
   },

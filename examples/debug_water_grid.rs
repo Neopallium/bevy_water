@@ -9,7 +9,7 @@ use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{
-  app::AppExit, asset::ChangeWatcher, prelude::*, utils::Duration,
+  app::AppExit, prelude::*, utils::Duration,
   render::{
     mesh::VertexAttributeValues,
     render_resource::TextureFormat,
@@ -22,13 +22,14 @@ use bevy::{
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
+#[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
-use bevy_water::water::material::WaterMaterial;
+use bevy_water::water::material::StandardWaterMaterial;
 
 #[cfg(not(feature = "atmosphere"))]
 const SKYBOX_NAME: &str = "textures/table_mountain_2_puresky_4k_cubemap.jpg";
@@ -52,11 +53,8 @@ fn main() {
           ..Default::default()
         }),
         ..default()
-      }).set(AssetPlugin {
-      // Tell the asset server to watch for asset changes on disk:
-      watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
-      ..default()
-    }));
+      }).set(AssetPlugin::default())
+    );
 
   #[cfg(feature = "debug")]
   app.add_plugins(DebugLinesPlugin::with_depth_test(true))
@@ -64,6 +62,7 @@ fn main() {
     .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   // Simple pan/orbit camera.
+  #[cfg(feature = "panorbit")]
   app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
@@ -316,9 +315,9 @@ fn update_ships(
 #[cfg(feature = "debug")]
 fn debug_water_wave_grid(
   water: WaterParam,
-  tiles: Query<(&Handle<Mesh>, &Handle<WaterMaterial>, &GlobalTransform)>,
+  tiles: Query<(&Handle<Mesh>, &Handle<StandardWaterMaterial>, &GlobalTransform)>,
   meshes: Res<Assets<Mesh>>,
-  materials: Res<Assets<WaterMaterial>>,
+  materials: Res<Assets<StandardWaterMaterial>>,
   mut lines: ResMut<DebugLines>
 ) {
   for (mesh, tile, global) in tiles.iter() {
@@ -327,8 +326,8 @@ fn debug_water_wave_grid(
     match (mesh, tile) {
       (Some(mesh), Some(tile)) => {
         /*
-        let coord_offset = tile.coord_offset - Vec2::new(128.0, 128.0);
-        let coord_scale = tile.coord_scale;
+        let coord_offset = tile.extension.coord_offset - Vec2::new(128.0, 128.0);
+        let coord_scale = tile.extension.coord_scale;
         match mesh.attribute(Mesh::ATTRIBUTE_UV_0) {
           Some(VertexAttributeValues::Float32x2(uvs)) => {
             let length = 0.5;
@@ -494,6 +493,8 @@ fn setup(
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
+      transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
+        .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
     FogSettings {
@@ -509,6 +510,7 @@ fn setup(
     },
   ));
 
+  #[cfg(feature = "panorbit")]
   cam.insert(PanOrbitCamera {
     //focus: Vec3::new(26.0, WATER_HEIGHT + 5.0, -11.0),
     focus: Vec3::new(0.0, WATER_HEIGHT + 5.0, 0.0),

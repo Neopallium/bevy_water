@@ -21,6 +21,12 @@ default = ["webgl2", "embed_shaders", "depth_prepass", "atmosphere"]
 # Embed the shaders at compile-time.
 embed_shaders = []
 
+# file/embed watcher
+file_watcher = [
+	"bevy/file_watcher",
+	"bevy/embedded_watcher",
+]
+
 # Enable debug lines in examples.
 debug = []
 

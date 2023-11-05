@@ -71,13 +71,13 @@ pub struct WaterTile {
 pub struct WaterTileBundle {
   pub name: Name,
   pub tile: WaterTile,
-  pub mesh: MaterialMeshBundle<WaterMaterial>,
+  pub mesh: MaterialMeshBundle<StandardWaterMaterial>,
 }
 
 impl WaterTileBundle {
   pub fn new(
     mesh: Handle<Mesh>,
-    material: Handle<WaterMaterial>,
+    material: Handle<StandardWaterMaterial>,
     height: f32,
     offset: Vec2,
   ) -> Self {
@@ -105,7 +105,7 @@ fn setup_water(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<WaterMaterial>>,
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {
   let grid = match settings.spawn_tiles {
     Some(grid) => grid,
@@ -137,17 +137,22 @@ fn setup_water(
           // UV starts at (0,0) at the corner.
           let coord_offset = Vec2::new(x, y);
           // Water material.
-          let material = materials.add(WaterMaterial {
-            amplitude: settings.amplitude,
-            base_color: settings.base_color,
-            clarity: settings.clarity,
-            deep_color: settings.deep_color,
-            shallow_color: settings.shallow_color,
-            edge_color: settings.edge_color,
-            edge_scale: settings.edge_scale,
-            coord_offset,
-            coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
-            ..default()
+          let material = materials.add(StandardWaterMaterial {
+            base: StandardMaterial {
+              base_color: settings.base_color,
+              ..default()
+            },
+            extension: WaterMaterial {
+              amplitude: settings.amplitude,
+              clarity: settings.clarity,
+              deep_color: settings.deep_color,
+              shallow_color: settings.shallow_color,
+              edge_color: settings.edge_color,
+              edge_scale: settings.edge_scale,
+              coord_offset,
+              coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
+              ..default()
+            }
           });
 
           parent.spawn((
@@ -159,20 +164,20 @@ fn setup_water(
     });
 }
 
-fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<WaterMaterial>>) {
+fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<StandardWaterMaterial>>) {
   if !settings.update_materials {
     // Don't update water materials.
     return;
   }
   for (_, mat) in materials.iter_mut() {
-    mat.alpha_mode = settings.alpha_mode;
-    mat.amplitude = settings.amplitude;
-    mat.base_color = settings.base_color;
-    mat.clarity = settings.clarity;
-    mat.deep_color = settings.deep_color;
-    mat.shallow_color = settings.shallow_color;
-    mat.edge_color = settings.edge_color;
-    mat.edge_scale = settings.edge_scale;
+    mat.base.base_color = settings.base_color;
+    mat.base.alpha_mode = settings.alpha_mode;
+    mat.extension.amplitude = settings.amplitude;
+    mat.extension.clarity = settings.clarity;
+    mat.extension.deep_color = settings.deep_color;
+    mat.extension.shallow_color = settings.shallow_color;
+    mat.extension.edge_color = settings.edge_color;
+    mat.extension.edge_scale = settings.edge_scale;
   }
 }
 

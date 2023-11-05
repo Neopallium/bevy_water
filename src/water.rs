@@ -140,6 +140,7 @@ fn setup_water(
           let material = materials.add(StandardWaterMaterial {
             base: StandardMaterial {
               base_color: settings.base_color,
+              perceptual_roughness: 0.22,
               ..default()
             },
             extension: WaterMaterial {

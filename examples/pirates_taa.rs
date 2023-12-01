@@ -62,8 +62,10 @@ fn main() {
     .add_plugins(TemporalAntiAliasPlugin);
 
   #[cfg(feature = "debug")]
-  app.add_plugins(DebugLinesPlugin::with_depth_test(true))
-    .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+  app.add_plugins(DebugLinesPlugin::with_depth_test(true));
+
+  #[cfg(feature = "inspector")]
+  app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   // Simple pan/orbit camera.
   #[cfg(feature = "panorbit")]

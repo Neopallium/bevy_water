@@ -58,8 +58,10 @@ fn main() {
 
   #[cfg(feature = "debug")]
   app.add_plugins(DebugLinesPlugin::with_depth_test(true))
-    .add_systems(Update, debug_water_wave_grid)
-    .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+    .add_systems(Update, debug_water_wave_grid);
+
+  #[cfg(feature = "inspector")]
+  app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
 
   // Simple pan/orbit camera.
   #[cfg(feature = "panorbit")]

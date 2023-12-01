@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.12.0"
+version = "0.12.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT/Apache-2.0"
@@ -27,6 +27,9 @@ file_watcher = [
 	"bevy/embedded_watcher",
 ]
 
+# Enable inspector in examples.
+inspector = []
+
 # Enable debug lines in examples.
 debug = []
 
@@ -47,10 +50,10 @@ webgpu = [ ]
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.12.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.12.1", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
-bevy = { version = "0.12.0", default-features = false , features = [
+bevy = { version = "0.12.1", default-features = false , features = [
   "animation",
   "bevy_asset",
   "bevy_audio",
@@ -76,8 +79,8 @@ bevy = { version = "0.12.0", default-features = false , features = [
   "tonemapping_luts",
   "default_font",
 ] }
-#bevy-inspector-egui = { version = "0.19" }
+bevy-inspector-egui = { version = "0.21" }
 #bevy_atmosphere = { version = "0.7" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 #bevy_spectator = { version = "0.3" }
-#bevy_panorbit_camera = { version = "0.6", features = ["bevy_egui"] }
+bevy_panorbit_camera = { version = "0.9", features = ["bevy_egui"] }

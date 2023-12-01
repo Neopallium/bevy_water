@@ -11,6 +11,7 @@ homepage = "https://github.com/Neopallium/bevy_water"
 
 exclude = [
 	"examples/*",
+	"showcase.webp",
 	"assets/models/*",
 	"assets/textures/*",
 ]

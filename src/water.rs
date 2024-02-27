@@ -116,11 +116,10 @@ fn setup_water(
   let water_height = settings.height;
   // Generate mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
-    shape::Plane {
+    Mesh::from(shape::Plane {
       size: WATER_SIZE as f32,
       subdivisions: WATER_SIZE as u32 / 4,
-    }
-    .into(),
+    })
   );
 
   commands
@@ -192,6 +191,6 @@ impl Plugin for WaterPlugin {
       .register_type::<WaterSettings>()
       .add_plugins(WaterMaterialPlugin)
       .add_systems(Startup, setup_water)
-      .add_systems(Update, update_materials.run_if(resource_changed::<WaterSettings>()));
+      .add_systems(Update, update_materials.run_if(resource_changed::<WaterSettings>));
   }
 }

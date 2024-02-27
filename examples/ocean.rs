@@ -19,6 +19,7 @@ use bevy::{app::AppExit, prelude::*};
 #[cfg(feature = "atmosphere")]
 use bevy::{
   time::Stopwatch,
+  utils::Duration,
 };
 
 #[cfg(feature = "atmosphere")]
@@ -107,8 +108,8 @@ fn main() {
   app.run();
 }
 
-fn handle_quit(input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
-  if input.pressed(KeyCode::Q) {
+fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
+  if input.pressed(KeyCode::KeyQ) {
     exit.send(AppExit);
   }
 }
@@ -119,12 +120,12 @@ struct UiState {
 }
 
 fn toggle_wireframe(
-  input: Res<Input<KeyCode>>,
+  input: Res<ButtonInput<KeyCode>>,
   query: Query<Entity, With<Handle<Mesh>>>,
   mut commands: Commands,
   mut state: ResMut<UiState>,
 ) {
-  if input.just_pressed(KeyCode::R) {
+  if input.just_pressed(KeyCode::KeyR) {
     // Update flag.
     let show_wireframe = !state.show_wireframe;
     state.show_wireframe = show_wireframe;
@@ -202,8 +203,8 @@ impl CycleTimer {
 }
 
 #[cfg(feature = "atmosphere")]
-fn timer_control(input: Res<Input<KeyCode>>, mut timer: ResMut<CycleTimer>) {
-  if input.just_pressed(KeyCode::P) {
+fn timer_control(input: Res<ButtonInput<KeyCode>>, mut timer: ResMut<CycleTimer>) {
+  if input.just_pressed(KeyCode::KeyP) {
     timer.toggle_pause();
   }
   if input.pressed(KeyCode::NumpadAdd) {
@@ -388,11 +389,10 @@ fn setup(
       Name::new(format!("Terrain")),
       MaterialMeshBundle {
         mesh: meshes.add(
-          shape::Plane {
+          Mesh::from(shape::Plane {
             size: 256.0 * 6.0,
             ..default()
-          }
-          .into(),
+          })
         ),
         material: material.clone(),
         transform: Transform::from_xyz(0.0, -5.0, 0.0),
@@ -406,11 +406,10 @@ fn setup(
       Name::new(format!("Fake island")),
       MaterialMeshBundle {
         mesh: meshes.add(
-          shape::Icosphere {
+          Mesh::try_from(shape::Icosphere {
             radius: 2.0,
             ..default()
-          }
-          .try_into().expect("Icosphere"),
+          }).expect("Icosphere mesh")
         ),
         material: material.clone(),
         transform: Transform::from_xyz(-30.0, -10.0, -30.0)
@@ -466,7 +465,10 @@ fn setup(
 
   #[cfg(not(feature = "atmosphere"))]
   {
-    cam.insert(Skybox(skybox_handle));
+    cam.insert(Skybox {
+      image: skybox_handle,
+      brightness: 1.0,
+    });
   }
 
   #[cfg(feature = "depth_prepass")]

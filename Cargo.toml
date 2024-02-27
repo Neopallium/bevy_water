@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.12.1"
+version = "0.13.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT/Apache-2.0"
@@ -51,10 +51,10 @@ webgpu = [ ]
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.12.1", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.13.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
-bevy = { version = "0.12.1", default-features = false , features = [
+bevy = { version = "0.13.0", default-features = false , features = [
   "animation",
   "bevy_asset",
   "bevy_audio",
@@ -80,8 +80,11 @@ bevy = { version = "0.12.1", default-features = false , features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.21" }
-#bevy_atmosphere = { version = "0.7" }
+#bevy-inspector-egui = { version = "0.23" }
+bevy_atmosphere = { version = "0.9" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-#bevy_spectator = { version = "0.3" }
-bevy_panorbit_camera = { version = "0.9", features = ["bevy_egui"] }
+bevy_spectator = { version = "0.5" }
+bevy_panorbit_camera = { version = "0.16" }
+
+[patch.crates-io]
+bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "release-0.13.1" }

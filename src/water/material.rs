@@ -2,14 +2,13 @@ use bevy::{
   asset::load_internal_asset,
   pbr::{ExtendedMaterial, MaterialExtension},
   prelude::*,
-  reflect::{std_traits::ReflectDefault, Reflect, TypeUuid},
+  reflect::{std_traits::ReflectDefault, Reflect},
   render::{render_asset::*, render_resource::*},
 };
 
 pub type StandardWaterMaterial = ExtendedMaterial<StandardMaterial, WaterMaterial>;
 
-#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
-#[uuid = "ea9ad5fe-a9ce-4ff1-aea8-d756ed456c46"]
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
 #[uniform(100, WaterMaterialUniform)]
 #[reflect(Default, Debug)]
 pub struct WaterMaterial {

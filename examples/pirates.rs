@@ -442,8 +442,8 @@ fn setup(
   cam.insert(PanOrbitCamera {
     focus: Vec3::new(26.0, WATER_HEIGHT + 5.0, -11.0),
     radius: Some(60.0),
-    alpha: Some(-std::f32::consts::FRAC_PI_2),
-    beta: Some(0.0),
+    raw: Some(-std::f32::consts::FRAC_PI_2),
+    pitch: Some(0.0),
     ..default()
   });
 

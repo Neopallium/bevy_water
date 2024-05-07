@@ -193,7 +193,6 @@ impl Plugin for WaterMaterialPlugin {
       prepass_enabled: false,
       ..default()
     })
-      .register_asset_reflect::<WaterMaterial>()
       .register_asset_reflect::<StandardWaterMaterial>();
   }
 }

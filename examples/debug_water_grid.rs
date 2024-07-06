@@ -12,7 +12,6 @@ use bevy::{
   app::AppExit, prelude::*, utils::Duration,
   render::{
     mesh::VertexAttributeValues,
-    render_resource::TextureFormat,
   },
 };
 #[cfg(feature = "atmosphere")]
@@ -53,7 +52,11 @@ fn main() {
           ..Default::default()
         }),
         ..default()
-      }).set(AssetPlugin::default())
+      }).set(AssetPlugin {
+        #[cfg(feature = "asset_preprocessing")]
+        mode: AssetMode::Processed,
+        ..default()
+      })
     );
 
   #[cfg(feature = "debug")]
@@ -426,12 +429,9 @@ fn setup(
   // Prepare textures.
   let base_color_texture = Some(asset_server.load("textures/coast_sand_01_1k/diff.jpg"));
   let metallic_roughness_texture =
-    Some(ImageReformat::reformat(&mut commands, &asset_server, "textures/coast_sand_01_1k/rough.jpg", TextureFormat::Rgba8Unorm));
+    Some(asset_server.load("textures/coast_sand_01_1k/rough.jpg"));
   let normal_map_texture =
-    Some(ImageReformat::reformat(&mut commands, &asset_server, "textures/coast_sand_01_1k/normal.jpg", TextureFormat::Rgba8Unorm));
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/diff.jpg");
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/rough.jpg");
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/normal.jpg");
+    Some(asset_server.load("textures/coast_sand_01_1k/normal.jpg"));
 
   // Coast sand material.
   let sandy = materials.add(StandardMaterial {

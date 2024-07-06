@@ -30,6 +30,8 @@ use bevy::{
 use bevy_atmosphere::prelude::*;
 #[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+#[cfg(feature = "spectator")]
+use bevy_spectator::*;
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
@@ -67,6 +69,10 @@ fn main() {
 
   #[cfg(feature = "inspector")]
   app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+
+  // Simple movement for this example
+  #[cfg(feature = "spectator")]
+  app.add_plugins(SpectatorPlugin);
 
   // Simple pan/orbit camera.
   #[cfg(feature = "panorbit")]
@@ -445,6 +451,9 @@ fn setup(
     },
     TemporalAntiAliasBundle::default(),
   ));
+
+  #[cfg(feature = "spectator")]
+  cam.insert(Spectator);
 
   #[cfg(feature = "panorbit")]
   cam.insert(PanOrbitCamera {

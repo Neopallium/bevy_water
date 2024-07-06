@@ -77,7 +77,7 @@ bevy = { version = "0.14.0", default-features = false , features = [
   "bevy_sprite",
   "bevy_text",
   "bevy_ui",
-  "multi-threaded",
+  "multi_threaded",
   "png",
   "jpeg",
   "hdr",

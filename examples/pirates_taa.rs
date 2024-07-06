@@ -18,7 +18,6 @@ use bevy::{
   },
   render::{
     mesh::VertexAttributeValues,
-    render_resource::TextureFormat,
   },
 };
 #[cfg(feature = "atmosphere")]

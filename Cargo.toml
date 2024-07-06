@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.13.1"
+version = "0.14.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -37,6 +37,9 @@ debug = []
 # Enable bevy_atmosphere support in the examples.
 atmosphere = []
 
+# Enable bevy_spectator support in the examples.
+spectator = []
+
 # Enable bevy_panorbit_camera support in the examples.
 panorbit = []
 
@@ -51,10 +54,10 @@ webgpu = [ ]
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.13.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.14.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
-bevy = { version = "0.13.0", default-features = false , features = [
+bevy = { version = "0.14.0", default-features = false , features = [
   "animation",
   "bevy_asset",
   "bevy_audio",
@@ -80,8 +83,8 @@ bevy = { version = "0.13.0", default-features = false , features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.23" }
-bevy_atmosphere = { version = "0.9" }
+#bevy-inspector-egui = { version = "0.23" }
+bevy_atmosphere = { version = "0.10" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-bevy_spectator = { version = "0.5" }
-bevy_panorbit_camera = { version = "0.16" }
+bevy_spectator = { version = "0.6" }
+#bevy_panorbit_camera = { version = "0.16" }

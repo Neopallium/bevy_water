@@ -15,6 +15,7 @@ use bevy::{
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::render::mesh::*;
 use bevy::{app::AppExit, prelude::*};
 #[cfg(feature = "atmosphere")]
 use bevy::{
@@ -26,6 +27,8 @@ use bevy::{
 use bevy_atmosphere::prelude::*;
 #[cfg(feature = "panorbit")]
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+#[cfg(feature = "spectator")]
+use bevy_spectator::*;
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
@@ -62,6 +65,10 @@ fn main() {
 
   #[cfg(feature = "inspector")]
   app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+
+  // Simple movement for this example
+  #[cfg(feature = "spectator")]
+  app.add_plugins(SpectatorPlugin);
 
   // Simple pan/orbit camera.
   #[cfg(feature = "panorbit")]
@@ -110,7 +117,7 @@ fn main() {
 
 fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
-    exit.send(AppExit);
+    exit.send(AppExit::Success);
   }
 }
 
@@ -334,7 +341,7 @@ fn asset_loaded(
     mut cubemap: ResMut<Cubemap>,
 ) {
     if !cubemap.is_loaded
-        && asset_server.get_load_state(cubemap.image_handle.clone_weak()) == Some(LoadState::Loaded)
+        && asset_server.get_load_state(&cubemap.image_handle) == Some(LoadState::Loaded)
     {
         let image = images.get_mut(&cubemap.image_handle).unwrap();
         // NOTE: PNGs do not have any metadata that could indicate they contain a cubemap texture,
@@ -376,7 +383,7 @@ fn setup(
 
   // Terrain material.
   let material = materials.add(StandardMaterial {
-    base_color: Color::rgba_u8(177, 168, 132, 255),
+    base_color: Color::srgba_u8(177, 168, 132, 255),
     perceptual_roughness: 0.6,
     metallic: 0.6,
     reflectance: 0.8,
@@ -389,10 +396,7 @@ fn setup(
       Name::new(format!("Terrain")),
       MaterialMeshBundle {
         mesh: meshes.add(
-          Mesh::from(shape::Plane {
-            size: 256.0 * 6.0,
-            ..default()
-          })
+          PlaneMeshBuilder::from_length(256.0 * 6.0)
         ),
         material: material.clone(),
         transform: Transform::from_xyz(0.0, -5.0, 0.0),
@@ -406,10 +410,7 @@ fn setup(
       Name::new(format!("Fake island")),
       MaterialMeshBundle {
         mesh: meshes.add(
-          Mesh::try_from(shape::Icosphere {
-            radius: 2.0,
-            ..default()
-          }).expect("Icosphere mesh")
+          Sphere::new(2.0)
         ),
         material: material.clone(),
         transform: Transform::from_xyz(-30.0, -10.0, -30.0)
@@ -439,17 +440,20 @@ fn setup(
       ..default()
     },
     FogSettings {
-        color: Color::rgba(0.1, 0.2, 0.4, 1.0),
-        //directional_light_color: Color::rgba(1.0, 0.95, 0.75, 0.5),
+        color: Color::srgba(0.1, 0.2, 0.4, 1.0),
+        //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
         //directional_light_exponent: 30.0,
         falloff: FogFalloff::from_visibility_colors(
             400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-            Color::rgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-            Color::rgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
+            Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+            Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
         ),
         ..default()
     },
   ));
+
+  #[cfg(feature = "spectator")]
+  cam.insert(Spectator);
 
   #[cfg(feature = "panorbit")]
   cam.insert(PanOrbitCamera {

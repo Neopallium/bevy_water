@@ -25,7 +25,7 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   #[cfg(feature = "atmosphere")]
   app.add_plugins(SpectatorPlugin); // Simple movement for this example
@@ -60,10 +60,7 @@ fn setup(
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
-    shape::Cube {
-      size: CUBE_SIZE,
-    }
-    .into(),
+    Cuboid::from_length(CUBE_SIZE)
   );
   // Water material.
   let material = materials.add(StandardWaterMaterial {

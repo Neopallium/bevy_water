@@ -3,6 +3,7 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::render::mesh::*;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "atmosphere")]
@@ -25,7 +26,7 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   #[cfg(feature = "atmosphere")]
   app.add_plugins(SpectatorPlugin); // Simple movement for this example
@@ -60,12 +61,12 @@ fn setup(
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
-    shape::UVSphere {
-      radius: RADIUS,
-      sectors: 48,
-      stacks: 36,
-    }
-    .into(),
+    Sphere::new(RADIUS)
+      .mesh()
+      .kind(SphereKind::Uv {
+        sectors: 48,
+        stacks: 36,
+      })
   );
   // Water material.
   let material = materials.add(StandardWaterMaterial {

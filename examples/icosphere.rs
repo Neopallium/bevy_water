@@ -2,7 +2,9 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::NotShadowCaster;
+use bevy::color::palettes::css::OLIVE;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::render::mesh::*;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "panorbit")]
@@ -32,7 +34,7 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   app.run();
 }
@@ -65,11 +67,11 @@ fn setup(
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
-    shape::Icosphere {
-      radius: RADIUS,
-      subdivisions: 15,
-    }
-    .try_into().expect("Icosphere"),
+    Sphere::new(RADIUS)
+      .mesh()
+      .kind(SphereKind::Ico {
+        subdivisions: 15,
+      })
   );
   // Water material.
   let material = water_materials.add(StandardWaterMaterial {
@@ -97,15 +99,15 @@ fn setup(
 
   // Mesh for terrain.
   let mesh: Handle<Mesh> = meshes.add(
-    shape::Icosphere {
-      radius: RADIUS - 0.8,
-      subdivisions: 15,
-    }
-    .try_into().expect("Icosphere"),
+    Sphere::new(RADIUS - 0.8)
+      .mesh()
+      .kind(SphereKind::Ico {
+        subdivisions: 15,
+      })
   );
   // Terrain material.
   let material = materials.add(StandardMaterial {
-    base_color: Color::OLIVE,
+    base_color: OLIVE.into(),
     ..default()
   });
 

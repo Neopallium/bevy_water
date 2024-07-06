@@ -8,6 +8,7 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::render::mesh::*;
 use bevy::{
   app::AppExit, prelude::*, utils::Duration,
   render::{
@@ -104,7 +105,7 @@ fn main() {
 
 fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
-    exit.send(AppExit);
+    exit.send(AppExit::Success);
   }
 }
 
@@ -447,10 +448,9 @@ fn setup(
   });
 
   let floor_mesh = {
-    let mut mesh = Mesh::from(shape::Plane {
-      size: 256.0 * 6.0,
-      subdivisions: 25,
-    });
+    let mut mesh = PlaneMeshBuilder::from_length(256.0 * 6.0)
+      .subdivisions(25)
+      .build();
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 50.0);
     meshes.add(mesh)
@@ -467,11 +467,12 @@ fn setup(
     ));
 
   let island_mesh = {
-    let mut mesh = Mesh::from(shape::UVSphere {
-            radius: 2.0,
-            sectors: 90,
-            stacks: 60,
-    });
+    let mut mesh = Sphere::new(2.0)
+      .mesh()
+      .kind(SphereKind::Uv {
+        sectors: 90,
+        stacks: 60,
+      }).build();
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 20.0);
     meshes.add(mesh)
@@ -500,13 +501,13 @@ fn setup(
       ..default()
     },
     FogSettings {
-        color: Color::rgba(0.1, 0.2, 0.4, 1.0),
-        //directional_light_color: Color::rgba(1.0, 0.95, 0.75, 0.5),
+        color: Color::srgba(0.1, 0.2, 0.4, 1.0),
+        //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
         //directional_light_exponent: 30.0,
         falloff: FogFalloff::from_visibility_colors(
             400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-            Color::rgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-            Color::rgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
+            Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+            Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
         ),
         ..default()
     },

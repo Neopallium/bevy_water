@@ -19,7 +19,7 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 #ifdef SKINNED
   var model = skinning::skin_model(vertex.joint_indices, vertex.joint_weights);
 #else
-  var model = mesh_functions::get_model_matrix(vertex.instance_index);
+  var model = mesh_functions::get_world_from_local(vertex.instance_index);
 #endif
 
 #ifdef VERTEX_UVS

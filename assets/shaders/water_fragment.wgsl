@@ -2,6 +2,7 @@
 	pbr_fragment::pbr_input_from_standard_material,
 	pbr_functions::alpha_discard,
 	mesh_view_bindings::view,
+	view_transformations::depth_ndc_to_view_z,
 }
 
 #ifdef PREPASS_PIPELINE
@@ -19,10 +20,6 @@
 
 #import bevy_water::water_bindings
 #import bevy_water::water_functions as water_fn
-
-fn ndc_depth_to_linear(ndc_depth: f32) -> f32 {
-  return -view.projection[3][2] / ndc_depth;
-}
 
 @fragment
 fn fragment(
@@ -53,8 +50,8 @@ fn fragment(
   let edge_color = water_bindings::material.edge_color;
 
   let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, 0u);
-  let z_depth_buffer_view = ndc_depth_to_linear(z_depth_buffer_ndc);
-  let z_fragment_view = ndc_depth_to_linear(in.position.z);
+  let z_depth_buffer_view = depth_ndc_to_view_z(z_depth_buffer_ndc);
+  let z_fragment_view = depth_ndc_to_view_z(in.position.z);
   let depth_diff_view = z_fragment_view - z_depth_buffer_view;
   let beers_law = exp(-depth_diff_view * water_clarity);
   let depth_color = vec4<f32>(mix(deep_color.xyz, shallow_color.xyz, beers_law), 1.0 - beers_law);

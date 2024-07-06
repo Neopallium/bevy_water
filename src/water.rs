@@ -1,5 +1,6 @@
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
+use bevy::render::mesh::*;
 
 pub mod material;
 use material::*;
@@ -45,11 +46,11 @@ impl Default for WaterSettings {
       height: 1.0,
       amplitude: 1.0,
       clarity: 0.25,
-      base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
-      deep_color: Color::rgba(0.2, 0.41, 0.54, 1.0),
-      shallow_color: Color::rgba(0.45, 0.78, 0.81, 1.0),
+      base_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
+      deep_color: Color::srgba(0.2, 0.41, 0.54, 1.0),
+      shallow_color: Color::srgba(0.45, 0.78, 0.81, 1.0),
       edge_scale: 0.1,
-      edge_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+      edge_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
       update_materials: true,
       spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
     }
@@ -87,9 +88,7 @@ impl WaterTileBundle {
     let tile_pos = offset + WATER_HALF_SIZE;
     Self {
       name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
-      tile: WaterTile {
-        offset,
-      },
+      tile: WaterTile { offset },
       mesh: MaterialMeshBundle {
         mesh,
         material,
@@ -116,10 +115,8 @@ fn setup_water(
   let water_height = settings.height;
   // Generate mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
-    Mesh::from(shape::Plane {
-      size: WATER_SIZE as f32,
-      subdivisions: WATER_SIZE as u32 / 4,
-    })
+    PlaneMeshBuilder::from_length(WATER_SIZE as f32)
+      .subdivisions(WATER_SIZE as u32 / 4),
   );
 
   commands
@@ -152,7 +149,7 @@ fn setup_water(
               coord_offset,
               coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
               ..default()
-            }
+            },
           });
 
           parent.spawn((
@@ -164,7 +161,10 @@ fn setup_water(
     });
 }
 
-fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<StandardWaterMaterial>>) {
+fn update_materials(
+  settings: Res<WaterSettings>,
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
+) {
   if !settings.update_materials {
     // Don't update water materials.
     return;
@@ -191,6 +191,9 @@ impl Plugin for WaterPlugin {
       .register_type::<WaterSettings>()
       .add_plugins(WaterMaterialPlugin)
       .add_systems(Startup, setup_water)
-      .add_systems(Update, update_materials.run_if(resource_changed::<WaterSettings>));
+      .add_systems(
+        Update,
+        update_materials.run_if(resource_changed::<WaterSettings>),
+      );
   }
 }

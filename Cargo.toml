@@ -49,7 +49,7 @@ depth_prepass = []
 # Select WebGL2 or WebGPU support.
 # Use webgl2 for native builds (non-wasm).
 webgl2 = [ "bevy/webgl2" ]
-webgpu = [ ]
+webgpu = [ "bevy/webgpu" ]
 
 [dependencies]
 anyhow = "1.0"

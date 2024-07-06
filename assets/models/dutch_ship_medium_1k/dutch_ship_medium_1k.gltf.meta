@@ -3,7 +3,8 @@
     asset: Load(
         loader: "bevy_gltf::loader::GltfLoader",
         settings: (
-            load_meshes: true,
+            load_meshes: ("MAIN_WORLD | RENDER_WORLD"),
+            load_materials: ("MAIN_WORLD | RENDER_WORLD"),
             load_cameras: true,
             load_lights: true,
             include_source: false,

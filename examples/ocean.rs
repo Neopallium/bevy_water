@@ -115,9 +115,9 @@ fn main() {
   app.run();
 }
 
-fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
+fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut _exit: EventWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
-    exit.send(AppExit::Success);
+    //_exit.send(AppExit::Success);
   }
 }
 

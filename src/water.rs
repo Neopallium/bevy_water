@@ -42,7 +42,10 @@ pub struct WaterSettings {
 impl Default for WaterSettings {
   fn default() -> Self {
     Self {
+      #[cfg(not(feature = "ssr"))]
       alpha_mode: AlphaMode::Blend,
+      #[cfg(feature = "ssr")]
+      alpha_mode: AlphaMode::Opaque,
       height: 1.0,
       amplitude: 1.0,
       clarity: 0.25,
@@ -134,6 +137,7 @@ fn setup_water(
           let material = materials.add(StandardWaterMaterial {
             base: StandardMaterial {
               base_color: settings.base_color,
+              #[cfg(not(feature = "ssr"))]
               perceptual_roughness: 0.22,
               ..default()
             },

@@ -196,7 +196,6 @@ impl Plugin for WaterMaterialPlugin {
 
     app
       .add_plugins(MaterialPlugin::<StandardWaterMaterial> {
-        prepass_enabled: false,
         ..default()
       })
       .register_asset_reflect::<StandardWaterMaterial>();

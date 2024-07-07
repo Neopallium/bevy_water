@@ -1,6 +1,11 @@
 #define_import_path bevy_water::water_functions
 
+#ifdef PREPASS_PIPELINE
+#import bevy_render::globals::Globals
+@group(0) @binding(1) var<uniform> globals: Globals;
+#else
 #import bevy_pbr::mesh_view_bindings::globals
+#endif
 
 #import bevy_water::water_bindings::material
 #import bevy_water::noise::fbm::fbm

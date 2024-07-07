@@ -91,6 +91,7 @@ bevy_spectator = { version = "0.6" }
 bevy_panorbit_camera = { version = "0.19", features = ["bevy_egui"] }
 
 [profile.release]
-lto = true
-opt-level = 's'
->>>>>>> 0216241 (Build ocean example.)
+lto = "thin"
+opt-level = 'z'
+# Strip all debugging information from the binary to reduce file size.
+strip = "debuginfo"

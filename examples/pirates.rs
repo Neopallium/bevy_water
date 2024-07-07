@@ -10,7 +10,7 @@ use bevy::core_pipeline::Skybox;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::render::mesh::*;
 use bevy::{
-  app::AppExit, prelude::*, utils::Duration,
+  app::AppExit, prelude::*,
   render::{
     mesh::VertexAttributeValues,
     render_resource::TextureFormat,
@@ -19,6 +19,7 @@ use bevy::{
 #[cfg(feature = "atmosphere")]
 use bevy::{
   time::Stopwatch,
+  utils::Duration,
 };
 
 #[cfg(feature = "atmosphere")]
@@ -32,9 +33,6 @@ use bevy_spectator::*;
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
-
-#[cfg(not(feature = "atmosphere"))]
-const SKYBOX_NAME: &str = "textures/table_mountain_2_puresky_4k_cubemap.jpg";
 
 const WATER_HEIGHT: f32 = 1.0;
 #[cfg(feature = "atmosphere")]
@@ -421,10 +419,6 @@ fn setup(
       },
     ));
 
-  // Skybox cubemap
-  #[cfg(not(feature = "atmosphere"))]
-  let skybox_handle = ImageReformat::cubemap(&mut commands, &asset_server, SKYBOX_NAME);
-
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
@@ -463,7 +457,7 @@ fn setup(
   #[cfg(not(feature = "atmosphere"))]
   {
     cam.insert(Skybox {
-      image: skybox_handle,
+      image: asset_server.load("textures/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 2000.0,
     });
   }

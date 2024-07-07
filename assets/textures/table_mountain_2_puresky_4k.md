@@ -1,15 +1,14 @@
 # HDR source
 From: https://polyhaven.com/a/table_mountain_2_puresky
-File: table_mountain_2_puresky_4k.hdr
+File: table_mountain_2_puresky_4k.exr
 License: CC0
 
-# Conversion to cubemap
+# Conversion to ktx2 cubemap
 
-Online HDRI to Cubemap: https://matheowis.github.io/HDRI-to-CubeMap/
-Save output to: 512 piece resolution, PNG, split file layout.
-
-ImageMagick:
-```bash
-unzip Standard-Cube-Map.zip
-convert px.png nx.png py.png ny.png pz.png nz.png -gravity center -append table_mountain_2_puresky_4k_cubemap.jpg
-```
+Converted using: https://github.com/pcwalton/gltf-ibl-sampler-egui
+Settings:
+Mimap levels: Default
+Cubemap resolution: Custom: 512
+Output pixel format: 32 bits, HDR (B9G9R9E5_UFLOAT_PACK32)
+LOD bias: 0.0
+Distribution: None (Base Color)

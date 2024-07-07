@@ -518,8 +518,8 @@ fn setup(
     //focus: Vec3::new(26.0, WATER_HEIGHT + 5.0, -11.0),
     focus: Vec3::new(0.0, WATER_HEIGHT + 5.0, 0.0),
     radius: Some(60.0),
-    alpha: Some(-std::f32::consts::FRAC_PI_2),
-    beta: Some(0.0),
+    yaw: Some(-std::f32::consts::FRAC_PI_2),
+    pitch: Some(0.0),
     ..default()
   });
 
@@ -530,7 +530,7 @@ fn setup(
   {
     cam.insert(Skybox {
       image: skybox_handle,
-      brightness: 1.0,
+      brightness: 2000.0,
     });
   }
 

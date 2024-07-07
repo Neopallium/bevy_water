@@ -149,8 +149,8 @@ fn setup(
     PanOrbitCamera {
       focus: Vec3::new(0.0, 0.0, 0.0),
       radius: Some(RADIUS + 15.0),
-      alpha: Some(3.14),
-      beta: Some(0.0),
+      yaw: Some(3.14),
+      pitch: Some(0.0),
       ..default()
     },
   ));

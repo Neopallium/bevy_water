@@ -459,8 +459,8 @@ fn setup(
   cam.insert(PanOrbitCamera {
     focus: Vec3::new(25.0, WATER_HEIGHT + 5.0, -61.0),
     radius: Some(4.0),
-    alpha: Some(3.14),
-    beta: Some(0.0),
+    yaw: Some(3.14),
+    pitch: Some(0.0),
     ..default()
   });
 
@@ -471,7 +471,7 @@ fn setup(
   {
     cam.insert(Skybox {
       image: skybox_handle,
-      brightness: 1.0,
+      brightness: 2000.0,
     });
   }
 

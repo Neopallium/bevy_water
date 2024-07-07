@@ -83,8 +83,8 @@ bevy = { version = "0.14.0", default-features = false , features = [
   "tonemapping_luts",
   "default_font",
 ] }
-#bevy-inspector-egui = { version = "0.23" }
+bevy-inspector-egui = { version = "0.25" }
 bevy_atmosphere = { version = "0.10" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 bevy_spectator = { version = "0.6" }
-#bevy_panorbit_camera = { version = "0.16" }
+bevy_panorbit_camera = { version = "0.19", features = ["bevy_egui"] }

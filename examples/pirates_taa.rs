@@ -10,27 +10,18 @@ use bevy::core_pipeline::Skybox;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::render::mesh::*;
 use bevy::{
-  app::AppExit, prelude::*,
-  core_pipeline::{
-    experimental::taa::{
-      TemporalAntiAliasBundle, TemporalAntiAliasPlugin,
-    },
-  },
-  render::{
-    mesh::VertexAttributeValues,
-    render_resource::TextureFormat,
-  },
+  app::AppExit,
+  core_pipeline::experimental::taa::{TemporalAntiAliasBundle, TemporalAntiAliasPlugin},
+  prelude::*,
+  render::{mesh::VertexAttributeValues, render_resource::TextureFormat},
 };
 #[cfg(feature = "atmosphere")]
-use bevy::{
-  time::Stopwatch,
-  utils::Duration,
-};
+use bevy::{time::Stopwatch, utils::Duration};
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
 #[cfg(feature = "panorbit")]
-use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 #[cfg(feature = "spectator")]
 use bevy_spectator::*;
 
@@ -51,14 +42,17 @@ fn main() {
   let mut app = App::new();
   app
     // Tell the asset server to watch for asset changes on disk:
-    .add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
-          title: "Pirates".to_string(),
-          resolution: (1200., 600.).into(),
-          ..Default::default()
-        }),
-        ..default()
-      }).set(AssetPlugin::default())
+    .add_plugins(
+      DefaultPlugins
+        .set(WindowPlugin {
+          primary_window: Some(Window {
+            title: "Pirates".to_string(),
+            resolution: (1200., 600.).into(),
+            ..Default::default()
+          }),
+          ..default()
+        })
+        .set(AssetPlugin::default()),
     )
     .add_plugins(TemporalAntiAliasPlugin);
 
@@ -77,7 +71,8 @@ fn main() {
   app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
-  app.insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
+  app
+    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -96,15 +91,13 @@ fn main() {
 
   // Atmosphere + daylight cycle.
   #[cfg(feature = "atmosphere")]
-  app.insert_resource(AtmosphereModel::new(Nishita {
+  app
+    .insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
     .add_plugins(AtmospherePlugin)
-    .insert_resource(CycleTimer::new(
-      Duration::from_millis(1000),
-      0.2,
-    ))
+    .insert_resource(CycleTimer::new(Duration::from_millis(1000), 0.2))
     .add_systems(Update, timer_control)
     .add_systems(Update, daylight_cycle);
 
@@ -279,8 +272,7 @@ impl Ship {
     water: &WaterParam,
     pos: Vec3,
     transform: &mut Transform,
-    #[cfg(feature = "debug")]
-    lines: &mut DebugLines
+    #[cfg(feature = "debug")] lines: &mut DebugLines,
   ) {
     let (yaw, _pitch, _roll) = transform.rotation.to_euler(EulerRot::YXZ);
     let global = Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(yaw));
@@ -311,8 +303,7 @@ impl Ship {
 fn update_ships(
   water: WaterParam,
   mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
-  #[cfg(feature = "debug")]
-  mut lines: ResMut<DebugLines>
+  #[cfg(feature = "debug")] mut lines: ResMut<DebugLines>,
 ) {
   for (ship, mut transform, global) in ships.iter_mut() {
     let pos = global.translation();
@@ -362,13 +353,33 @@ fn setup(
 
   // Prepare textures.
   let base_color_texture = Some(asset_server.load("textures/coast_sand_01_1k/diff.jpg"));
-  let metallic_roughness_texture =
-    Some(ImageReformat::reformat(&mut commands, &asset_server, "textures/coast_sand_01_1k/rough.jpg", TextureFormat::Rgba8Unorm));
-  let normal_map_texture =
-    Some(ImageReformat::reformat(&mut commands, &asset_server, "textures/coast_sand_01_1k/normal.jpg", TextureFormat::Rgba8Unorm));
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/diff.jpg");
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/rough.jpg");
-  ImageReformat::uv_repeat(&mut commands, &asset_server, "textures/coast_sand_01_1k/normal.jpg");
+  let metallic_roughness_texture = Some(ImageReformat::reformat(
+    &mut commands,
+    &asset_server,
+    "textures/coast_sand_01_1k/rough.jpg",
+    TextureFormat::Rgba8Unorm,
+  ));
+  let normal_map_texture = Some(ImageReformat::reformat(
+    &mut commands,
+    &asset_server,
+    "textures/coast_sand_01_1k/normal.jpg",
+    TextureFormat::Rgba8Unorm,
+  ));
+  ImageReformat::uv_repeat(
+    &mut commands,
+    &asset_server,
+    "textures/coast_sand_01_1k/diff.jpg",
+  );
+  ImageReformat::uv_repeat(
+    &mut commands,
+    &asset_server,
+    "textures/coast_sand_01_1k/rough.jpg",
+  );
+  ImageReformat::uv_repeat(
+    &mut commands,
+    &asset_server,
+    "textures/coast_sand_01_1k/normal.jpg",
+  );
 
   // Coast sand material.
   let sandy = materials.add(StandardMaterial {
@@ -391,16 +402,15 @@ fn setup(
     scale_uvs(&mut mesh, 50.0);
     meshes.add(mesh)
   };
-  commands
-    .spawn((
-      Name::new(format!("Sea floor")),
-      MaterialMeshBundle {
-        mesh: floor_mesh.clone(),
-        material: sandy.clone(),
-        transform: Transform::from_xyz(0.0, -5.0, 0.0),
-        ..default()
-      },
-    ));
+  commands.spawn((
+    Name::new(format!("Sea floor")),
+    MaterialMeshBundle {
+      mesh: floor_mesh.clone(),
+      material: sandy.clone(),
+      transform: Transform::from_xyz(0.0, -5.0, 0.0),
+      ..default()
+    },
+  ));
 
   let island_mesh = {
     let mut mesh = Sphere::new(2.0)
@@ -408,22 +418,21 @@ fn setup(
       .kind(SphereKind::Uv {
         sectors: 90,
         stacks: 60,
-      }).build();
+      })
+      .build();
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 20.0);
     meshes.add(mesh)
   };
-  commands
-    .spawn((
-      Name::new(format!("Sandy island")),
-      MaterialMeshBundle {
-        mesh: island_mesh.clone(),
-        material: sandy.clone(),
-        transform: Transform::from_xyz(-30.0, -10.0, -30.0)
-          .with_scale(Vec3::new(30.0, 6.5, 30.0)),
-        ..default()
-      },
-    ));
+  commands.spawn((
+    Name::new(format!("Sandy island")),
+    MaterialMeshBundle {
+      mesh: island_mesh.clone(),
+      material: sandy.clone(),
+      transform: Transform::from_xyz(-30.0, -10.0, -30.0).with_scale(Vec3::new(30.0, 6.5, 30.0)),
+      ..default()
+    },
+  ));
 
   // camera
   let mut cam = commands.spawn((
@@ -433,20 +442,20 @@ fn setup(
       ..default()
     },
     EnvironmentMapLight {
-        diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
-        specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
-        intensity: 1.0,
+      diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
+      specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
+      intensity: 1.0,
     },
     FogSettings {
-        color: Color::srgba(0.1, 0.2, 0.4, 1.0),
-        //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
-        //directional_light_exponent: 30.0,
-        falloff: FogFalloff::from_visibility_colors(
-            400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-            Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-            Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
-        ),
-        ..default()
+      color: Color::srgba(0.1, 0.2, 0.4, 1.0),
+      //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
+      //directional_light_exponent: 30.0,
+      falloff: FogFalloff::from_visibility_colors(
+        400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
+        Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+        Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
+      ),
+      ..default()
     },
     TemporalAntiAliasBundle::default(),
   ));
@@ -490,24 +499,25 @@ fn setup(
   for x in 1..10 {
     let f = (x as f32) * 2.40;
     let f2 = ((x % 6) as f32) * -20.90;
-    commands.spawn(ShipBundle {
-      ship: ship.clone(),
-      name: Name::new(format!("Dutch Ship {x}")),
-      spatial: SpatialBundle {
-        transform: Transform::from_xyz(-10.0 + (f * 7.8), 0.0, 30.0 + f2)
-          .with_rotation(Quat::from_rotation_y(f)),
+    commands
+      .spawn(ShipBundle {
+        ship: ship.clone(),
+        name: Name::new(format!("Dutch Ship {x}")),
+        spatial: SpatialBundle {
+          transform: Transform::from_xyz(-10.0 + (f * 7.8), 0.0, 30.0 + f2)
+            .with_rotation(Quat::from_rotation_y(f)),
+          ..default()
+        },
         ..default()
-      },
-      ..default()
-    })
-    .with_children(|parent| {
-      parent.spawn(SceneBundle {
-        scene: scene.clone(),
-        // Rotate ship model to line up with rotation axis.
-        transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
-        ..default()
+      })
+      .with_children(|parent| {
+        parent.spawn(SceneBundle {
+          scene: scene.clone(),
+          // Rotate ship model to line up with rotation axis.
+          transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
+          ..default()
+        });
       });
-    });
   }
 
   info!("Move camera around by using WASD for lateral movement");

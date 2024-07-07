@@ -18,38 +18,36 @@ fn mix(x: f32, y: f32, a: f32) -> f32 {
 fn random2d(v: Vec2) -> f32 {
   // Note: the large values here seem to cause some precision differences between the shader
   // and this Rust code.
-	return fract(v.dot(Vec2::new(12.9898, 78.233)).sin() * 43758.5453123);
+  return fract(v.dot(Vec2::new(12.9898, 78.233)).sin() * 43758.5453123);
 }
 
 // Sometimes needed for noise functions that sample multiple corners.
 fn random2di(v: Vec2) -> f32 {
-	return random2d(v.floor());
+  return random2d(v.floor());
 }
 
 fn cubic_hermite_curve_2d(p: Vec2) -> Vec2 {
   return Vec2 {
     x: smoothstep(0.0, 1.0, p.x),
     y: smoothstep(0.0, 1.0, p.y),
-  }
+  };
 }
 
 fn vnoise2d(v: Vec2) -> f32 {
-	let i = v.floor();
-	let f = fract_vec2(v);
+  let i = v.floor();
+  let f = fract_vec2(v);
 
-	// corners.
-	let a = random2di(i);
-	let b = random2di(i + Vec2::new(1.0, 0.0));
-	let c = random2di(i + Vec2::new(0.0, 1.0));
-	let d = random2di(i + Vec2::new(1.0, 1.0));
+  // corners.
+  let a = random2di(i);
+  let b = random2di(i + Vec2::new(1.0, 0.0));
+  let c = random2di(i + Vec2::new(0.0, 1.0));
+  let d = random2di(i + Vec2::new(1.0, 1.0));
 
-	// Smooth
+  // Smooth
   let u = cubic_hermite_curve_2d(f);
 
-	// Mix
-	return mix(a, b, u.x) +
-		(c - a) * u.y * (1.0 - u.x) +
-		(d - b) * u.x * u.y;
+  // Mix
+  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
 fn noise2(v: Vec2) -> f32 {
@@ -59,9 +57,12 @@ fn noise2(v: Vec2) -> f32 {
 const M2: Mat2 = Mat2::from_cols(Vec2::new(0.8, 0.6), Vec2::new(-0.6, 0.8));
 fn fbm(mut p: Vec2) -> f32 {
   let mut f = 0.;
-  f = f + 0.5000 * noise2(p); p = M2 * p * 2.02;
-  f = f + 0.2500 * noise2(p); p = M2 * p * 2.03;
-  f = f + 0.1250 * noise2(p); p = M2 * p * 2.01;
+  f = f + 0.5000 * noise2(p);
+  p = M2 * p * 2.02;
+  f = f + 0.2500 * noise2(p);
+  p = M2 * p * 2.03;
+  f = f + 0.1250 * noise2(p);
+  p = M2 * p * 2.01;
   f = f + 0.0625 * noise2(p);
   return f / 0.9375;
 }

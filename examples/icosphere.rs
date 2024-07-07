@@ -1,22 +1,21 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
-use bevy::pbr::NotShadowCaster;
 use bevy::color::palettes::css::OLIVE;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::pbr::NotShadowCaster;
 use bevy::render::mesh::*;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "panorbit")]
-use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use bevy_water::material::{WaterMaterial, StandardWaterMaterial};
+use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
 
 const RADIUS: f32 = 10.0;
 
 fn main() {
-
   let mut app = App::new();
 
   app.add_plugins(DefaultPlugins);
@@ -25,7 +24,8 @@ fn main() {
   #[cfg(feature = "panorbit")]
   app.add_plugins(PanOrbitCameraPlugin);
 
-  app.insert_resource(WaterSettings {
+  app
+    .insert_resource(WaterSettings {
       amplitude: 0.4,
       spawn_tiles: None,
       ..default()
@@ -34,7 +34,10 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
+    .add_systems(
+      Update,
+      toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)),
+    );
 
   app.run();
 }
@@ -69,9 +72,7 @@ fn setup(
   let mesh: Handle<Mesh> = meshes.add(
     Sphere::new(RADIUS)
       .mesh()
-      .kind(SphereKind::Ico {
-        subdivisions: 15,
-      })
+      .kind(SphereKind::Ico { subdivisions: 15 }),
   );
   // Water material.
   let material = water_materials.add(StandardWaterMaterial {
@@ -85,25 +86,22 @@ fn setup(
   });
 
   // Spawn water entity.
-  commands
-    .spawn((
-      Name::new(format!("Water world")),
-      MaterialMeshBundle {
-        mesh,
-        material,
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-      },
-      NotShadowCaster,
-    ));
+  commands.spawn((
+    Name::new(format!("Water world")),
+    MaterialMeshBundle {
+      mesh,
+      material,
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
 
   // Mesh for terrain.
   let mesh: Handle<Mesh> = meshes.add(
     Sphere::new(RADIUS - 0.8)
       .mesh()
-      .kind(SphereKind::Ico {
-        subdivisions: 15,
-      })
+      .kind(SphereKind::Ico { subdivisions: 15 }),
   );
   // Terrain material.
   let material = materials.add(StandardMaterial {
@@ -112,17 +110,16 @@ fn setup(
   });
 
   // Spawn planet entity.
-  commands
-    .spawn((
-      Name::new(format!("Planet terrain")),
-      MaterialMeshBundle {
-        mesh,
-        material,
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-      },
-      NotShadowCaster,
-    ));
+  commands.spawn((
+    Name::new(format!("Planet terrain")),
+    MaterialMeshBundle {
+      mesh,
+      material,
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
 
   // light
   commands.spawn(PointLightBundle {
@@ -143,9 +140,8 @@ fn setup(
     ..default()
   });
   #[cfg(feature = "panorbit")]
-  let mut cam = commands.spawn((Camera3dBundle {
-    ..default()
-  },
+  let mut cam = commands.spawn((
+    Camera3dBundle { ..default() },
     PanOrbitCamera {
       focus: Vec3::new(0.0, 0.0, 0.0),
       radius: Some(RADIUS + 15.0),

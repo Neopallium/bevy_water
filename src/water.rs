@@ -114,10 +114,8 @@ fn setup_water(
   };
   let water_height = settings.height;
   // Generate mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(
-    PlaneMeshBuilder::from_length(WATER_SIZE as f32)
-      .subdivisions(WATER_SIZE as u32 / 4),
-  );
+  let mesh: Handle<Mesh> = meshes
+    .add(PlaneMeshBuilder::from_length(WATER_SIZE as f32).subdivisions(WATER_SIZE as u32 / 4));
 
   commands
     .spawn(WaterBundle {

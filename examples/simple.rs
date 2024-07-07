@@ -12,7 +12,8 @@ const WATER_HEIGHT: f32 = 20.0;
 fn main() {
   let mut app = App::new();
 
-  app.add_plugins(DefaultPlugins)
+  app
+    .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
       ..default()

@@ -7,20 +7,17 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 #[cfg(not(feature = "atmosphere"))]
 use bevy::core_pipeline::Skybox;
 
-use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::pbr::NotShadowCaster;
 use bevy::render::mesh::*;
 use bevy::{app::AppExit, prelude::*};
 #[cfg(feature = "atmosphere")]
-use bevy::{
-  time::Stopwatch,
-  utils::Duration,
-};
+use bevy::{time::Stopwatch, utils::Duration};
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
 #[cfg(feature = "panorbit")]
-use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 #[cfg(feature = "spectator")]
 use bevy_spectator::*;
 
@@ -41,14 +38,17 @@ fn main() {
   let mut app = App::new();
   app
     // Tell the asset server to watch for asset changes on disk:
-    .add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
-          title: "Pirates".to_string(),
-          resolution: (1200., 600.).into(),
-          ..Default::default()
-        }),
-        ..default()
-      }).set(AssetPlugin::default())
+    .add_plugins(
+      DefaultPlugins
+        .set(WindowPlugin {
+          primary_window: Some(Window {
+            title: "Pirates".to_string(),
+            resolution: (1200., 600.).into(),
+            ..Default::default()
+          }),
+          ..default()
+        })
+        .set(AssetPlugin::default()),
     );
 
   #[cfg(feature = "debug")]
@@ -66,7 +66,8 @@ fn main() {
   app.add_plugins(PanOrbitCameraPlugin);
 
   // Improve shadows.
-  app.insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
+  app
+    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -85,15 +86,13 @@ fn main() {
 
   // Atmosphere + daylight cycle.
   #[cfg(feature = "atmosphere")]
-  app.insert_resource(AtmosphereModel::new(Nishita {
+  app
+    .insert_resource(AtmosphereModel::new(Nishita {
       sun_position: Vec3::new(0.0, 1.0, 1.0),
       ..default()
     }))
     .add_plugins(AtmospherePlugin)
-    .insert_resource(CycleTimer::new(
-      Duration::from_millis(1000),
-      0.2,
-    ))
+    .insert_resource(CycleTimer::new(Duration::from_millis(1000), 0.2))
     .add_systems(Update, timer_control)
     .add_systems(Update, daylight_cycle);
 
@@ -268,8 +267,7 @@ impl Ship {
     water: &WaterParam,
     pos: Vec3,
     transform: &mut Transform,
-    #[cfg(feature = "debug")]
-    lines: &mut DebugLines
+    #[cfg(feature = "debug")] lines: &mut DebugLines,
   ) {
     let (yaw, _pitch, _roll) = transform.rotation.to_euler(EulerRot::YXZ);
     let global = Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(yaw));
@@ -299,8 +297,7 @@ impl Ship {
 fn update_ships(
   water: WaterParam,
   mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
-  #[cfg(feature = "debug")]
-  mut lines: ResMut<DebugLines>
+  #[cfg(feature = "debug")] mut lines: ResMut<DebugLines>,
 ) {
   for (ship, mut transform, global) in ships.iter_mut() {
     let pos = global.translation();
@@ -341,34 +338,27 @@ fn setup(
   });
 
   // Spawn simple terrain plane.
-  commands
-    .spawn((
-      Name::new(format!("Terrain")),
-      MaterialMeshBundle {
-        mesh: meshes.add(
-          PlaneMeshBuilder::from_length(256.0 * 6.0)
-        ),
-        material: material.clone(),
-        transform: Transform::from_xyz(0.0, -5.0, 0.0),
-        ..default()
-      },
-      NotShadowCaster,
-    ));
+  commands.spawn((
+    Name::new(format!("Terrain")),
+    MaterialMeshBundle {
+      mesh: meshes.add(PlaneMeshBuilder::from_length(256.0 * 6.0)),
+      material: material.clone(),
+      transform: Transform::from_xyz(0.0, -5.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
   // Spawn fake island.
-  commands
-    .spawn((
-      Name::new(format!("Fake island")),
-      MaterialMeshBundle {
-        mesh: meshes.add(
-          Sphere::new(2.0)
-        ),
-        material: material.clone(),
-        transform: Transform::from_xyz(-30.0, -10.0, -30.0)
-          .with_scale(Vec3::new(30.0, 6.5, 30.0)),
-        ..default()
-      },
-      NotShadowCaster,
-    ));
+  commands.spawn((
+    Name::new(format!("Fake island")),
+    MaterialMeshBundle {
+      mesh: meshes.add(Sphere::new(2.0)),
+      material: material.clone(),
+      transform: Transform::from_xyz(-30.0, -10.0, -30.0).with_scale(Vec3::new(30.0, 6.5, 30.0)),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
 
   // camera
   let mut cam = commands.spawn((
@@ -378,15 +368,15 @@ fn setup(
       ..default()
     },
     FogSettings {
-        color: Color::srgba(0.1, 0.2, 0.4, 1.0),
-        //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
-        //directional_light_exponent: 30.0,
-        falloff: FogFalloff::from_visibility_colors(
-            400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-            Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-            Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
-        ),
-        ..default()
+      color: Color::srgba(0.1, 0.2, 0.4, 1.0),
+      //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
+      //directional_light_exponent: 30.0,
+      falloff: FogFalloff::from_visibility_colors(
+        400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
+        Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+        Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
+      ),
+      ..default()
     },
   ));
 

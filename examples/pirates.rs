@@ -419,12 +419,38 @@ fn setup(
       },
     ));
 
+  let orb_mesh = {
+    let mut mesh = Sphere::new(1.0)
+      .mesh()
+      .kind(SphereKind::Uv {
+        sectors: 90,
+        stacks: 60,
+      }).build();
+    mesh.generate_tangents().expect("tangents");
+    meshes.add(mesh)
+  };
+  commands
+    .spawn((
+      Name::new(format!("Orb")),
+      MaterialMeshBundle {
+        mesh: orb_mesh.clone(),
+        material: materials.add(Color::srgba(0.1, 0.2, 0.4, 1.0)),
+        transform: Transform::from_xyz(-30.0, 10.0, -30.0),
+        ..default()
+      },
+    ));
+
   // camera
   let mut cam = commands.spawn((
     Camera3dBundle {
       transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
         .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
+    },
+    EnvironmentMapLight {
+        diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
+        specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
+        intensity: 1.0,
     },
     FogSettings {
         color: Color::srgba(0.1, 0.2, 0.4, 1.0),
@@ -457,7 +483,7 @@ fn setup(
   #[cfg(not(feature = "atmosphere"))]
   {
     cam.insert(Skybox {
-      image: asset_server.load("textures/table_mountain_2_puresky_4k_cubemap.ktx2"),
+      image: asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 2000.0,
     });
   }

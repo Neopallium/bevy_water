@@ -522,7 +522,7 @@ fn setup(
   #[cfg(not(feature = "atmosphere"))]
   {
     cam.insert(Skybox {
-      image: asset_server.load("textures/table_mountain_2_puresky_4k_cubemap.ktx2"),
+      image: asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 2000.0,
     });
   }

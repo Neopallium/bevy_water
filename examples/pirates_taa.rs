@@ -432,6 +432,11 @@ fn setup(
         .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
+    EnvironmentMapLight {
+        diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
+        specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
+        intensity: 1.0,
+    },
     FogSettings {
         color: Color::srgba(0.1, 0.2, 0.4, 1.0),
         //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
@@ -464,7 +469,7 @@ fn setup(
   #[cfg(not(feature = "atmosphere"))]
   {
     cam.insert(Skybox {
-      image: asset_server.load("textures/table_mountain_2_puresky_4k_cubemap.ktx2"),
+      image: asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 1000.0,
     });
   }

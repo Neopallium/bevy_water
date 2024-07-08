@@ -139,6 +139,8 @@ fn setup_water(
               base_color: settings.base_color,
               #[cfg(not(feature = "ssr"))]
               perceptual_roughness: 0.22,
+              #[cfg(feature = "ssr")]
+              perceptual_roughness: 0.0,
               ..default()
             },
             extension: WaterMaterial {

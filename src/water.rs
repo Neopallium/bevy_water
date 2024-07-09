@@ -1,4 +1,4 @@
-use bevy::pbr::NotShadowCaster;
+use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
 use bevy::render::mesh::*;
 
@@ -8,6 +8,26 @@ use material::*;
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;
+
+#[derive(Debug, Clone, Reflect)]
+#[repr(u32)]
+pub enum WaterQuality {
+  Basic,
+  Medium,
+  High,
+  Ultra,
+}
+
+impl Into<u32> for WaterQuality {
+    fn into(self) -> u32 {
+       match self {
+        WaterQuality::Basic => 1,
+        WaterQuality::Medium => 2,
+        WaterQuality::High => 3,
+        WaterQuality::Ultra => 4,
+           }
+    }
+}
 
 #[derive(Resource, Clone, Debug, Reflect)]
 #[reflect(Resource)]
@@ -37,6 +57,9 @@ pub struct WaterSettings {
   pub update_materials: bool,
   /// During startup, spawn a 2d grid of water tiles.
   pub spawn_tiles: Option<UVec2>,
+  /// Water quality
+  ///
+  pub water_quality: WaterQuality,
 }
 
 impl Default for WaterSettings {
@@ -56,6 +79,7 @@ impl Default for WaterSettings {
       edge_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
       update_materials: true,
       spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
+      water_quality: WaterQuality::Ultra,
     }
   }
 }
@@ -116,9 +140,16 @@ fn setup_water(
     }
   };
   let water_height = settings.height;
+  let mut plane_builder = PlaneMeshBuilder::from_length(WATER_SIZE as f32);
+  plane_builder = match settings.water_quality {
+    WaterQuality::Basic => plane_builder,
+    WaterQuality::Medium => plane_builder,
+    WaterQuality::High => plane_builder.subdivisions(WATER_SIZE as u32 / 16),
+    WaterQuality::Ultra => plane_builder.subdivisions(WATER_SIZE as u32 / 4),
+  };
+
   // Generate mesh for water.
-  let mesh: Handle<Mesh> = meshes
-    .add(PlaneMeshBuilder::from_length(WATER_SIZE as f32).subdivisions(WATER_SIZE as u32 / 4));
+  let mesh: Handle<Mesh> = meshes.add(plane_builder);
 
   commands
     .spawn(WaterBundle {
@@ -152,14 +183,22 @@ fn setup_water(
               edge_scale: settings.edge_scale,
               coord_offset,
               coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
+              quality: settings.water_quality.clone().into(),
               ..default()
             },
           });
 
-          parent.spawn((
+          let mut tile_bundle = parent.spawn((
             WaterTileBundle::new(mesh.clone(), material, water_height, coord_offset),
             NotShadowCaster,
           ));
+
+          match settings.water_quality {
+            WaterQuality::Basic | WaterQuality::Medium => {
+              tile_bundle.insert(NotShadowReceiver);
+            }
+            _ => {}
+          };
         }
       }
     });

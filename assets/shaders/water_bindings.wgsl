@@ -9,6 +9,7 @@ struct WaterMaterial {
   amplitude: f32,
   clarity: f32,
   edge_scale: f32,
+  quality: u32
 };
 
 @group(2) @binding(100)

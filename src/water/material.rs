@@ -26,6 +26,7 @@ pub struct WaterMaterial {
   pub amplitude: f32,
   pub coord_offset: Vec2,
   pub coord_scale: Vec2,
+  pub quality: u32,
 }
 
 impl Default for WaterMaterial {
@@ -39,6 +40,7 @@ impl Default for WaterMaterial {
       amplitude: 1.0,
       coord_offset: Vec2::new(0.0, 0.0),
       coord_scale: Vec2::new(1.0, 1.0),
+      quality: 4
     }
   }
 }
@@ -53,6 +55,7 @@ pub struct WaterMaterialUniform {
   pub amplitude: f32,
   pub clarity: f32,
   pub edge_scale: f32,
+  pub quality: u32,
 }
 
 impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
@@ -66,6 +69,7 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
       edge_color: self.edge_color.to_linear().to_vec4(),
       coord_offset: self.coord_offset,
       coord_scale: self.coord_scale,
+      quality: self.quality,
     }
   }
 }
@@ -110,14 +114,6 @@ impl MaterialExtension for WaterMaterial {
   }
 
   fn fragment_shader() -> ShaderRef {
-    water_fragment_shader()
-  }
-
-  fn deferred_vertex_shader() -> ShaderRef {
-    water_vertex_shader()
-  }
-
-  fn deferred_fragment_shader() -> ShaderRef {
     water_fragment_shader()
   }
 }

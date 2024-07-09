@@ -41,15 +41,18 @@ fn fragment(
 
 	var in = p_in;
   var world_position: vec4<f32> = in.world_position;
-  let w_pos = water_fn::uv_to_coord(in.uv);
-  // Calculate normal.
-  let delta = 0.5;
-  let height = water_fn::get_wave_height(w_pos);
-  let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
-  let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
-  let world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
-  in.world_normal = world_normal;
-
+  if water_bindings::material.quality > 1 {
+    let w_pos = water_fn::uv_to_coord(in.uv);
+    // Calculate normal.
+    let delta = 0.5;
+    let height = water_fn::get_wave_height(w_pos);
+    let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
+    let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
+    in.world_normal = normalize(in.world_normal + vec3<f32>(height - height_dx, delta, height - height_dz));
+  } else {
+    in.world_normal = normalize(in.world_normal);
+  } 
+ 
   // If we're in the crossfade section of a visibility range, conditionally
   // discard the fragment according to the visibility pattern.
 #ifdef VISIBILITY_RANGE_DITHER

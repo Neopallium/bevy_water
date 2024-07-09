@@ -144,7 +144,7 @@ fn setup_water(
   plane_builder = match settings.water_quality {
     WaterQuality::Basic => plane_builder,
     WaterQuality::Medium => plane_builder,
-    WaterQuality::High => plane_builder.subdivisions(WATER_SIZE as u32 / 8),
+    WaterQuality::High => plane_builder.subdivisions(WATER_SIZE as u32 / 16),
     WaterQuality::Ultra => plane_builder.subdivisions(WATER_SIZE as u32 / 4),
   };
 

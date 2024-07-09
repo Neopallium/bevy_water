@@ -41,7 +41,7 @@ fn fragment(
 
 	var in = p_in;
   var world_position: vec4<f32> = in.world_position;
-  if water_bindings::material.quality < 2 {
+  if water_bindings::material.quality > 1 {
     let w_pos = water_fn::uv_to_coord(in.uv);
     // Calculate normal.
     let delta = 0.2;

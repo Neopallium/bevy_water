@@ -14,11 +14,9 @@ fn fbm(v2: vec2<f32>, quality: u32) -> f32 {
         p = m2 * p * 2.02;
         f = f + 0.2500 * vnoise2d(p);
     }
-    if quality > 2 {
+    if quality > 3 {
         p = m2 * p * 2.03;
         f = f + 0.1250 * vnoise2d(p);
-    }
-    if quality > 3 {
         p = m2 * p * 2.01;
         f = f + 0.0625 * vnoise2d(p);
     }

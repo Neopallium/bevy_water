@@ -6,6 +6,7 @@
 
 #import bevy_water::water_functions as water_fn
 
+#import bevy_water::water_bindings
 #ifdef PREPASS_PIPELINE
 #import bevy_pbr::prepass_io::{Vertex, VertexOutput}
 #else
@@ -36,8 +37,13 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   let world_position = mesh_functions::mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
 
   // Add the wave height to the world position.
-  let w_pos = water_fn::uv_to_coord(vertex.uv);
-  let height = water_fn::get_wave_height(w_pos);
+  var height = 1.0;
+  if water_bindings::material.quality > 2 {
+    let w_pos = water_fn::uv_to_coord(vertex.uv);
+    height *= water_fn::get_wave_height(w_pos);
+  } else {
+    height *= 0.5;
+  }
 
   out.world_position = world_position + vec4<f32>((out.world_normal * height), 0.);
   out.position = position_world_to_clip(out.world_position.xyz);

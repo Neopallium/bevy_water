@@ -15,7 +15,7 @@ fn vnoise2d(v: vec2<f32>) -> f32 {
 	let d = random2di(i + vec2<f32>(1.0, 1.0));
 
 	// Smooth
-  let u = cubic_hermite_curve_2d(f);
+    let u = cubic_hermite_curve_2d(f);
 
 	// Mix
 	return mix(a, b, u.x) +

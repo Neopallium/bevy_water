@@ -23,4 +23,5 @@ fn fbm(v2: vec2<f32>, quality: u32) -> f32 {
         f = f + 0.0625 * vnoise2d(p);
     }
     return f / 0.9375;
+
 }

@@ -29,8 +29,11 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
     if material.quality > 1 {
         d = d + wave((p + time) * 0.4) * 0.3;
     }
-    if material.quality > 3 {
+    if material.quality > 2 {
         d = d + wave((p + time) * 0.5) * 0.2;
+    }
+    if material.quality > 3 {
+        d = d + wave((p + time) * 0.6) * 0.2;
     }
     return material.amplitude * d;
 }

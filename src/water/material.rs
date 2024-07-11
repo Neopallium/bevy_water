@@ -116,14 +116,6 @@ impl MaterialExtension for WaterMaterial {
   fn fragment_shader() -> ShaderRef {
     water_fragment_shader()
   }
-
-  fn deferred_vertex_shader() -> ShaderRef {
-    water_vertex_shader()
-  }
-
-  fn deferred_fragment_shader() -> ShaderRef {
-    water_fragment_shader()
-  }
 }
 
 #[derive(Default, Clone, Debug)]

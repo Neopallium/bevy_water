@@ -109,11 +109,23 @@ fn water_vertex_shader() -> ShaderRef {
 }
 
 impl MaterialExtension for WaterMaterial {
+  #[cfg(not(feature = "ssr"))]
   fn vertex_shader() -> ShaderRef {
     water_vertex_shader()
   }
 
+  #[cfg(not(feature = "ssr"))]
   fn fragment_shader() -> ShaderRef {
+    water_fragment_shader()
+  }
+
+  #[cfg(feature = "ssr")]
+  fn deferred_vertex_shader() -> ShaderRef {
+    water_vertex_shader()
+  }
+
+  #[cfg(feature = "ssr")]
+  fn deferred_fragment_shader() -> ShaderRef {
     water_fragment_shader()
   }
 }

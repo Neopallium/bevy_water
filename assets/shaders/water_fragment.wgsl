@@ -1,20 +1,20 @@
 #import bevy_pbr::{
   pbr_functions::alpha_discard,
   pbr_fragment::pbr_input_from_standard_material,
-	view_transformations::depth_ndc_to_view_z,
+  view_transformations::depth_ndc_to_view_z,
 }
 
 #ifdef PREPASS_PIPELINE
 #import bevy_pbr::{
-	prepass_io::{VertexOutput, FragmentOutput},
-	pbr_deferred_functions::deferred_output,
+  prepass_io::{VertexOutput, FragmentOutput},
+  pbr_deferred_functions::deferred_output,
 }
 #else
 #import bevy_pbr::{
-	forward_io::{VertexOutput, FragmentOutput},
+  forward_io::{VertexOutput, FragmentOutput},
   pbr_functions,
-	pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing},
-	pbr_types::STANDARD_MATERIAL_FLAGS_UNLIT_BIT,
+  pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing},
+  pbr_types::STANDARD_MATERIAL_FLAGS_UNLIT_BIT,
 }
 #endif
 
@@ -39,19 +39,22 @@ fn fragment(
   let is_front = true;
 #endif
 
-	var in = p_in;
+  var in = p_in;
   var world_position: vec4<f32> = in.world_position;
-  if water_bindings::material.quality > 1 {
-    let w_pos = water_fn::uv_to_coord(in.uv);
-    // Calculate normal.
+  let w_pos = water_fn::uv_to_coord(in.uv);
+  // Calculate normal.
+  let height = water_fn::get_wave_height(w_pos);
+  if water_bindings::material.quality > 2 {
     let delta = 0.5;
-    let height = water_fn::get_wave_height(w_pos);
     let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
     let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
-    in.world_normal = normalize(in.world_normal + vec3<f32>(height - height_dx, delta, height - height_dz));
+    in.world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
   } else {
-    in.world_normal = normalize(in.world_normal);
-  } 
+    let pos = world_position.xyz + (in.world_normal * height);
+    let pos_dx = dpdx(pos);
+    let pos_dy = dpdy(pos);
+    in.world_normal = normalize(cross(pos_dy, pos_dx));
+  }
  
   // If we're in the crossfade section of a visibility range, conditionally
   // discard the fragment according to the visibility pattern.
@@ -60,10 +63,10 @@ fn fragment(
 #endif
 
   // generate a PbrInput struct from the StandardMaterial bindings
-	var pbr_input = pbr_input_from_standard_material(in, is_front);
+  var pbr_input = pbr_input_from_standard_material(in, is_front);
 
   let deep_color = water_bindings::material.deep_color;
-	var water_color = deep_color;
+  var water_color = deep_color;
 #ifdef DEPTH_PREPASS
 #ifndef PREPASS_PIPELINE
 #ifndef WEBGL2
@@ -87,7 +90,7 @@ fn fragment(
   //let foam_color = water_bindings::material.edge_color;
   //let foam = mix(foam_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));
 
-	// alpha discard
+  // alpha discard
   pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
 #ifdef PREPASS_PIPELINE

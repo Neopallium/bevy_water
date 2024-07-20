@@ -9,7 +9,7 @@ pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;
 
-#[derive(Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Copy, Reflect)]
 #[repr(u32)]
 pub enum WaterQuality {
   Basic,
@@ -183,7 +183,7 @@ fn setup_water(
               edge_scale: settings.edge_scale,
               coord_offset,
               coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
-              quality: settings.water_quality.clone().into(),
+              quality: settings.water_quality.into(),
               ..default()
             },
           });
@@ -221,6 +221,7 @@ fn update_materials(
     mat.extension.shallow_color = settings.shallow_color;
     mat.extension.edge_color = settings.edge_color;
     mat.extension.edge_scale = settings.edge_scale;
+    mat.extension.quality = settings.water_quality.into();
   }
 }
 

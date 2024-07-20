@@ -196,6 +196,8 @@ impl Plugin for WaterMaterialPlugin {
 
     app
       .add_plugins(MaterialPlugin::<StandardWaterMaterial> {
+        #[cfg(all(feature = "depth_prepass", not(feature = "ssr")))]
+        prepass_enabled: false,
         ..default()
       })
       .register_asset_reflect::<StandardWaterMaterial>();

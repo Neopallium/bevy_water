@@ -8,7 +8,7 @@
 #endif
 
 #import bevy_water::water_bindings::material
-#import bevy_water::noise::fbm::fbm
+#import bevy_water::noise;
 
 fn wave(p: vec2<f32>) -> f32 {
   let time = globals.time * .5 + 23.0;
@@ -19,22 +19,32 @@ fn wave(p: vec2<f32>) -> f32 {
   let wave_len_y = 2.0;
   let wave_x = cos(p.x / wave_len_x + time_x);
   let wave_y = smoothstep(1.0, 0.0, abs(sin(p.y / wave_len_y + wave_x + time_y)));
-  let n = fbm(p, material.quality) / 2.0 - 1.0;
+#ifdef QUALITY_1
+  let n = noise::fbm::fbm_half(p) / 2.0 - 1.0;
+#else
+#ifdef QUALITY_2
+  let n = noise::fbm::fbm_half(p) / 2.0 - 1.0;
+#else
+  let n = noise::fbm::fbm(p) / 2.0 - 1.0;
+#endif
+#endif
   return wave_y + n;
 }
 
 fn get_wave_height(p: vec2<f32>) -> f32 {
   let time = globals.time / 2.0;
   var d = wave((p - time) * 0.3) * 0.3;
-  if material.quality > 1 {
-    d = d + wave((p + time) * 0.4) * 0.3;
-  }
-  if material.quality > 2 {
-    d = d + wave((p + time) * 0.5) * 0.2;
-  }
-  if material.quality > 3 {
-    d = d + wave((p + time) * 0.6) * 0.2;
-  }
+#ifdef QUALITY_2
+  d = d + wave((p + time) * 0.4) * 0.3;
+#else
+#ifdef QUALITY_3
+  d = d + wave((p + time) * 0.5) * 0.2;
+#else
+#ifdef QUALITY_4
+  d = d + wave((p + time) * 0.6) * 0.2;
+#endif
+#endif
+#endif
   return material.amplitude * d;
 }
 

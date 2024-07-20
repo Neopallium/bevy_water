@@ -1,15 +1,18 @@
 use bevy::{
   asset::load_internal_asset,
-  pbr::{ExtendedMaterial, MaterialExtension},
+  pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline},
   prelude::*,
   reflect::{std_traits::ReflectDefault, Reflect},
-  render::{render_asset::*, render_resource::*, texture::GpuImage},
+  render::{
+    mesh::MeshVertexBufferLayoutRef, render_asset::*, render_resource::*, texture::GpuImage,
+  },
 };
 
 pub type StandardWaterMaterial = ExtendedMaterial<StandardMaterial, WaterMaterial>;
 
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
 #[uniform(100, WaterMaterialUniform)]
+#[bind_group_data(WaterMaterialKey)]
 #[reflect(Default, Debug)]
 pub struct WaterMaterial {
   /// Water clarity, 0.0 = invisible.
@@ -40,7 +43,20 @@ impl Default for WaterMaterial {
       amplitude: 1.0,
       coord_offset: Vec2::new(0.0, 0.0),
       coord_scale: Vec2::new(1.0, 1.0),
-      quality: 4
+      quality: 4,
+    }
+  }
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+pub struct WaterMaterialKey {
+  quality: u32,
+}
+
+impl From<&WaterMaterial> for WaterMaterialKey {
+  fn from(material: &WaterMaterial) -> WaterMaterialKey {
+    WaterMaterialKey {
+      quality: material.quality,
     }
   }
 }
@@ -55,7 +71,6 @@ pub struct WaterMaterialUniform {
   pub amplitude: f32,
   pub clarity: f32,
   pub edge_scale: f32,
-  pub quality: u32,
 }
 
 impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
@@ -69,7 +84,6 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
       edge_color: self.edge_color.to_linear().to_vec4(),
       coord_offset: self.coord_offset,
       coord_scale: self.coord_scale,
-      quality: self.quality,
     }
   }
 }
@@ -127,6 +141,27 @@ impl MaterialExtension for WaterMaterial {
   #[cfg(feature = "ssr")]
   fn deferred_fragment_shader() -> ShaderRef {
     water_fragment_shader()
+  }
+
+  fn specialize(
+    _pipeline: &MaterialExtensionPipeline,
+    descriptor: &mut RenderPipelineDescriptor,
+    _layout: &MeshVertexBufferLayoutRef,
+    key: MaterialExtensionKey<Self>,
+  ) -> Result<(), SpecializedMeshPipelineError> {
+    let dyn_water = key.bind_group_data.quality > 2;
+    if let Some(fragment) = descriptor.fragment.as_mut() {
+      fragment
+        .shader_defs
+        .push(format!("QUALITY_{}", key.bind_group_data.quality).into());
+      if dyn_water {
+        fragment.shader_defs.push("DYN_WATER".into());
+      }
+    }
+    if dyn_water {
+      descriptor.vertex.shader_defs.push("DYN_WATER".into());
+    }
+    Ok(())
   }
 }
 

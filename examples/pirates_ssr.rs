@@ -8,6 +8,8 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+#[cfg(feature = "ssr")]
+use bevy::pbr::{DefaultOpaqueRendererMethod, ScreenSpaceReflectionsBundle};
 use bevy::render::mesh::*;
 use bevy::{
   app::AppExit,
@@ -16,8 +18,6 @@ use bevy::{
 };
 #[cfg(feature = "atmosphere")]
 use bevy::{time::Stopwatch, utils::Duration};
-#[cfg(feature = "ssr")]
-use bevy::pbr::{DefaultOpaqueRendererMethod, ScreenSpaceReflectionsBundle};
 
 #[cfg(feature = "atmosphere")]
 use bevy_atmosphere::prelude::*;
@@ -467,9 +467,7 @@ fn setup(
     },
   ));
   let box_mesh = {
-    let mut mesh = Cuboid::from_length(1.0)
-      .mesh()
-      .build();
+    let mut mesh = Cuboid::from_length(1.0).mesh().build();
     mesh.generate_tangents().expect("tangents");
     meshes.add(mesh)
   };

@@ -19,14 +19,14 @@ pub enum WaterQuality {
 }
 
 impl Into<u32> for WaterQuality {
-    fn into(self) -> u32 {
-       match self {
-        WaterQuality::Basic => 1,
-        WaterQuality::Medium => 2,
-        WaterQuality::High => 3,
-        WaterQuality::Ultra => 4,
-           }
+  fn into(self) -> u32 {
+    match self {
+      WaterQuality::Basic => 1,
+      WaterQuality::Medium => 2,
+      WaterQuality::High => 3,
+      WaterQuality::Ultra => 4,
     }
+  }
 }
 
 #[derive(Resource, Clone, Debug, Reflect)]

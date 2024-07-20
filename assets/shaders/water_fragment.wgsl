@@ -44,17 +44,17 @@ fn fragment(
   let w_pos = water_fn::uv_to_coord(in.uv);
   // Calculate normal.
   let height = water_fn::get_wave_height(w_pos);
-  if water_bindings::material.quality > 2 {
-    let delta = 0.5;
-    let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
-    let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
-    in.world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
-  } else {
-    let pos = world_position.xyz + (in.world_normal * height);
-    let pos_dx = dpdx(pos);
-    let pos_dy = dpdy(pos);
-    in.world_normal = normalize(cross(pos_dy, pos_dx));
-  }
+#ifdef DYN_WATER
+  let delta = 0.5;
+  let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
+  let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
+  in.world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
+#else
+  let pos = world_position.xyz + (in.world_normal * height);
+  let pos_dx = dpdx(pos);
+  let pos_dy = dpdy(pos);
+  in.world_normal = normalize(cross(pos_dy, pos_dx));
+#endif
  
   // If we're in the crossfade section of a visibility range, conditionally
   // discard the fragment according to the visibility pattern.

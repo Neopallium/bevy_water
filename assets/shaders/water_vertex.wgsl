@@ -38,10 +38,10 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 
   // Add the wave height to the world position.
 	var height = -0.5;
-  if water_bindings::material.quality > 2 {
-    let w_pos = water_fn::uv_to_coord(vertex.uv);
-    height = water_fn::get_wave_height(w_pos);
-  }
+#ifdef DYN_WATER
+  let w_pos = water_fn::uv_to_coord(vertex.uv);
+  height = water_fn::get_wave_height(w_pos);
+#endif
 
   out.world_position = world_position + vec4<f32>((out.world_normal * height), 0.);
   out.position = position_world_to_clip(out.world_position.xyz);

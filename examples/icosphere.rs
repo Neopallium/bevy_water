@@ -88,12 +88,9 @@ fn setup(
   // Spawn water entity.
   commands.spawn((
     Name::new(format!("Water world")),
-    MaterialMeshBundle {
-      mesh: Mesh3d(mesh),
-      material: MeshMaterial3d(material),
-      transform: Transform::from_xyz(0.0, 0.0, 0.0),
-      ..default()
-    },
+    Mesh3d(mesh),
+    MeshMaterial3d(material),
+    Transform::from_xyz(0.0, 0.0, 0.0),
     NotShadowCaster,
   ));
 
@@ -112,33 +109,28 @@ fn setup(
   // Spawn planet entity.
   commands.spawn((
     Name::new(format!("Planet terrain")),
-    MaterialMeshBundle {
-      mesh: Mesh3d(mesh),
-      material: MeshMaterial3d(material),
-      transform: Transform::from_xyz(0.0, 0.0, 0.0),
-      ..default()
-    },
+    Mesh3d(mesh),
+    MeshMaterial3d(material),
+    Transform::from_xyz(0.0, 0.0, 0.0),
     NotShadowCaster,
   ));
 
   // light
-  commands.spawn(PointLightBundle {
-    transform: Transform::from_xyz(4.0, RADIUS + 8.0, 4.0),
-    point_light: PointLight {
+  commands.spawn((
+    PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
       shadows_enabled: true,
       ..default()
     },
-    ..default()
-  });
+    Transform::from_xyz(4.0, RADIUS + 8.0, 4.0),
+  ));
 
   // camera
   #[cfg(not(feature = "panorbit"))]
-  let mut cam = commands.spawn(Camera3dBundle {
-    transform: Transform::from_xyz(0.0, RADIUS + 15.0, 0.0)
-      .looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
-    ..default()
-  });
+  let mut cam = commands.spawn((
+    Camera3d::default(),
+    Transform::from_xyz(0.0, RADIUS + 15.0, 0.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+  ));
   #[cfg(feature = "panorbit")]
   let mut cam = commands.spawn((
     Camera3dBundle { ..default() },

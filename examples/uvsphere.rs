@@ -82,32 +82,27 @@ fn setup(
 
   commands.spawn((
     Name::new(format!("Water world")),
-    MaterialMeshBundle {
-      mesh: mesh.into(),
-      material,
-      transform: Transform::from_xyz(0.0, 0.0, 0.0),
-      ..default()
-    },
+    Mesh3d(mesh),
+    MeshMaterial3d(material),
+    Transform::from_xyz(0.0, 0.0, 0.0),
     NotShadowCaster,
   ));
 
   // light
-  commands.spawn(PointLightBundle {
-    transform: Transform::from_xyz(4.0, RADIUS + 8.0, 4.0),
-    point_light: PointLight {
+  commands.spawn((
+    PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
       shadows_enabled: true,
       ..default()
     },
-    ..default()
-  });
+    Transform::from_xyz(4.0, RADIUS + 8.0, 4.0),
+  ));
 
   // camera
-  let mut cam = commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0)
-      .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-    ..default()
-  },));
+  let mut cam = commands.spawn((
+    Camera3d::default(),
+    Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+  ));
 
   #[cfg(feature = "atmosphere")]
   cam.insert(Spectator);

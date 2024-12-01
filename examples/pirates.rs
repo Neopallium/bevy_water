@@ -29,15 +29,15 @@ use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
 
-const WATER_HEIGHT: f32 = 1.0;
+pub const WATER_HEIGHT: f32 = 1.0;
 #[cfg(feature = "atmosphere")]
-const SPEED_MIN: f32 = 0.05;
+pub const SPEED_MIN: f32 = 0.05;
 #[cfg(feature = "atmosphere")]
-const SPEED_DELTA: f32 = 0.01;
+pub const SPEED_DELTA: f32 = 0.01;
 #[cfg(feature = "atmosphere")]
-const SPEED_MAX: f32 = 1.0;
+pub const SPEED_MAX: f32 = 1.0;
 
-fn main() {
+pub fn pirates_app(title: &str) -> App {
   let mut app = App::new();
   app
     // Tell the asset server to watch for asset changes on disk:
@@ -45,7 +45,7 @@ fn main() {
       DefaultPlugins
         .set(WindowPlugin {
           primary_window: Some(Window {
-            title: "Pirates".to_string(),
+            title: title.to_string(),
             resolution: (1200., 600.).into(),
             ..Default::default()
           }),
@@ -79,8 +79,7 @@ fn main() {
     .add_plugins((WaterPlugin, ImageUtilsPlugin))
     // Ship Physics.
     .add_systems(Update, update_ships)
-    // Setup
-    .add_systems(Startup, setup)
+    // Quit on `Q` press.
     .add_systems(Update, handle_quit)
     // Wireframe
     .add_plugins(WireframePlugin)
@@ -99,21 +98,31 @@ fn main() {
     .add_systems(Update, timer_control)
     .add_systems(Update, daylight_cycle);
 
+  app
+}
+
+#[allow(dead_code)]
+pub fn main() {
+  let mut app = pirates_app("Pirates");
+
+  // Setup
+  app.add_systems(Startup, (setup_ocean, setup_orb, setup_camera, setup_ships));
+
   app.run();
 }
 
-fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
+pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
     exit.send(AppExit::Success);
   }
 }
 
 #[derive(Resource, Clone, Debug, Default)]
-struct UiState {
+pub struct UiState {
   show_wireframe: bool,
 }
 
-fn toggle_wireframe(
+pub fn toggle_wireframe(
   input: Res<ButtonInput<KeyCode>>,
   query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
@@ -137,12 +146,12 @@ fn toggle_wireframe(
 
 // Marker for updating the position of the light, not needed unless we have multiple lights
 #[derive(Component)]
-struct Sun;
+pub struct Sun;
 
 // Timer for updating the daylight cycle (updating the atmosphere every frame is slow, so it's better to do incremental changes)
 #[derive(Resource)]
 #[cfg(feature = "atmosphere")]
-struct CycleTimer {
+pub struct CycleTimer {
   update: Timer,
   time: Stopwatch,
   speed: f32,
@@ -197,7 +206,7 @@ impl CycleTimer {
 }
 
 #[cfg(feature = "atmosphere")]
-fn timer_control(input: Res<ButtonInput<KeyCode>>, mut timer: ResMut<CycleTimer>) {
+pub fn timer_control(input: Res<ButtonInput<KeyCode>>, mut timer: ResMut<CycleTimer>) {
   if input.just_pressed(KeyCode::KeyP) {
     timer.toggle_pause();
   }
@@ -213,7 +222,7 @@ fn timer_control(input: Res<ButtonInput<KeyCode>>, mut timer: ResMut<CycleTimer>
 
 // We can edit the Atmosphere resource and it will be updated automatically
 #[cfg(feature = "atmosphere")]
-fn daylight_cycle(
+pub fn daylight_cycle(
   mut atmosphere: AtmosphereMut<Nishita>,
   mut query: Query<(&mut Transform, &mut DirectionalLight), With<Sun>>,
   mut timer: ResMut<CycleTimer>,
@@ -240,15 +249,9 @@ fn daylight_cycle(
   }
 }
 
-#[derive(Bundle, Default)]
-struct ShipBundle {
-  ship: Ship,
-  name: Name,
-  spatial: SpatialBundle,
-}
-
 #[derive(Component, Default, Clone)]
-struct Ship {
+#[require(Transform, Visibility)]
+pub struct Ship {
   water_line: f32,
   front: Vec3,
   back_left: Vec3,
@@ -256,7 +259,7 @@ struct Ship {
 }
 
 impl Ship {
-  fn new(water_line: f32, front: f32, back: f32, left: f32, right: f32) -> Self {
+  pub fn new(water_line: f32, front: f32, back: f32, left: f32, right: f32) -> Self {
     Self {
       water_line,
       front: Vec3::new(0.0, 0.0, front),
@@ -298,7 +301,7 @@ impl Ship {
   }
 }
 
-fn update_ships(
+pub fn update_ships(
   water: WaterParam,
   mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
   #[cfg(feature = "debug")] mut lines: ResMut<DebugLines>,
@@ -312,7 +315,7 @@ fn update_ships(
   }
 }
 
-fn scale_uvs(mesh: &mut Mesh, scale: f32) {
+pub fn scale_uvs(mesh: &mut Mesh, scale: f32) {
   match mesh.attribute_mut(Mesh::ATTRIBUTE_UV_0) {
     Some(VertexAttributeValues::Float32x2(uvs)) => {
       for [x, y] in uvs.iter_mut() {
@@ -329,8 +332,8 @@ fn scale_uvs(mesh: &mut Mesh, scale: f32) {
   }
 }
 
-/// set up a simple 3D scene
-fn setup(
+/// set up a simple ocean scene.
+pub fn setup_ocean(
   mut commands: Commands,
   asset_server: Res<AssetServer>,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -338,15 +341,14 @@ fn setup(
 ) {
   // "Sun"
   commands
-    .spawn(DirectionalLightBundle {
-      directional_light: DirectionalLight {
+    .spawn((
+      DirectionalLight {
         illuminance: 11127.65,
         shadows_enabled: true,
         ..default()
       },
-      transform: Transform::from_rotation(Quat::from_rotation_x(-0.340)),
-      ..default()
-    })
+      Transform::from_rotation(Quat::from_rotation_x(-0.340)),
+    ))
     .insert(Sun); // Marks the light as Sun
 
   // Prepare textures.
@@ -402,12 +404,9 @@ fn setup(
   });
   commands.spawn((
     Name::new(format!("Sea floor")),
-    MaterialMeshBundle {
-      mesh: floor_mesh.clone(),
-      material: sandy.clone(),
-      transform: Transform::from_xyz(0.0, -5.0, 0.0),
-      ..default()
-    },
+    floor_mesh.clone(),
+    sandy.clone(),
+    Transform::from_xyz(0.0, -5.0, 0.0),
   ));
 
   let island_mesh = Mesh3d({
@@ -424,14 +423,18 @@ fn setup(
   });
   commands.spawn((
     Name::new(format!("Sandy island")),
-    MaterialMeshBundle {
-      mesh: island_mesh.clone(),
-      material: sandy.clone(),
-      transform: Transform::from_xyz(-30.0, -10.0, -30.0).with_scale(Vec3::new(30.0, 6.5, 30.0)),
-      ..default()
-    },
+    island_mesh.clone(),
+    sandy.clone(),
+    Transform::from_xyz(-30.0, -10.0, -30.0).with_scale(Vec3::new(30.0, 6.5, 30.0)),
   ));
+}
 
+/// Create a simple Orb.
+pub fn setup_orb(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+) {
   let orb_mesh = Mesh3d({
     let mut mesh = Sphere::new(1.0)
       .mesh()
@@ -445,21 +448,22 @@ fn setup(
   });
   commands.spawn((
     Name::new(format!("Orb")),
-    MaterialMeshBundle {
-      mesh: orb_mesh.clone(),
-      material: MeshMaterial3d(materials.add(Color::srgba(0.1, 0.2, 0.4, 1.0))),
-      transform: Transform::from_xyz(-30.0, 10.0, -30.0),
-      ..default()
-    },
+    orb_mesh.clone(),
+    MeshMaterial3d(materials.add(Color::srgba(0.1, 0.2, 0.4, 1.0))),
+    Transform::from_xyz(-30.0, 10.0, -30.0),
   ));
+}
 
+/// Create a simple 3D camera
+pub fn make_camera<'a>(
+  commands: &'a mut Commands,
+  asset_server: &AssetServer,
+) -> EntityCommands<'a> {
   // camera
   let mut cam = commands.spawn((
-    Camera3dBundle {
-      transform: Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
-        .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
-      ..default()
-    },
+    Camera3d::default(),
+    Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
+      .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
     EnvironmentMapLight {
       diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
       specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
@@ -511,6 +515,21 @@ fn setup(
   // This is just to keep the compiler happy when not using `depth_prepass` feature.
   cam.insert(Name::new("Camera"));
 
+  info!("Move camera around by using WASD for lateral movement");
+  info!("Use Left Shift and Spacebar for vertical movement");
+  info!("Use the mouse to look around");
+  info!("Press Esc to hide or show the mouse cursor");
+
+  cam
+}
+
+/// set up a simple 3D camera
+pub fn setup_camera(mut commands: Commands, asset_server: Res<AssetServer>) {
+  make_camera(&mut commands, &asset_server);
+}
+
+/// Spawn some dutch ships.
+pub fn setup_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
   // Spawn ships.
   let scene =
     SceneRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
@@ -521,28 +540,18 @@ fn setup(
     let f = (x as f32) * 2.40;
     let f2 = ((x % 6) as f32) * -20.90;
     commands
-      .spawn(ShipBundle {
-        ship: ship.clone(),
-        name: Name::new(format!("Dutch Ship {x}")),
-        spatial: SpatialBundle {
-          transform: Transform::from_xyz(-10.0 + (f * 7.8), 0.0, 30.0 + f2)
-            .with_rotation(Quat::from_rotation_y(f)),
-          ..default()
-        },
-        ..default()
-      })
+      .spawn((
+        ship.clone(),
+        Name::new(format!("Dutch Ship {x}")),
+        Transform::from_xyz(-10.0 + (f * 7.8), 0.0, 30.0 + f2)
+          .with_rotation(Quat::from_rotation_y(f)),
+      ))
       .with_children(|parent| {
-        parent.spawn(SceneBundle {
-          scene: scene.clone(),
+        parent.spawn((
+          scene.clone(),
           // Rotate ship model to line up with rotation axis.
-          transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
-          ..default()
-        });
+          Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
+        ));
       });
   }
-
-  info!("Move camera around by using WASD for lateral movement");
-  info!("Use Left Shift and Spacebar for vertical movement");
-  info!("Use the mouse to look around");
-  info!("Press Esc to hide or show the mouse cursor");
 }

@@ -32,15 +32,17 @@ fn setup(
 ) {
   // wall
   commands.spawn(PbrBundle {
-    mesh: meshes.add(Mesh::from(Cuboid::from_size(Vec3::new(5.0, 5.0, 0.1)))),
-    material: materials.add(Color::srgb(0.5, 0.3, 0.3)),
+    mesh: meshes
+      .add(Mesh::from(Cuboid::from_size(Vec3::new(5.0, 5.0, 0.1))))
+      .into(),
+    material: materials.add(Color::srgb(0.5, 0.3, 0.3)).into(),
     transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
     ..default()
   });
   // cube
   commands.spawn(PbrBundle {
-    mesh: meshes.add(Cuboid::from_length(1.0)),
-    material: materials.add(Color::srgb(0.8, 0.7, 0.6)),
+    mesh: meshes.add(Cuboid::from_length(1.0)).into(),
+    material: materials.add(Color::srgb(0.8, 0.7, 0.6)).into(),
     transform: Transform::from_xyz(0.0, WATER_HEIGHT, 0.0),
     ..default()
   });

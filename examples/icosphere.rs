@@ -44,7 +44,7 @@ fn main() {
 
 fn toggle_wireframe(
   mut show_wireframe: Local<bool>,
-  query: Query<Entity, With<Handle<Mesh>>>,
+  query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
 ) {
   // Update flag.
@@ -89,8 +89,8 @@ fn setup(
   commands.spawn((
     Name::new(format!("Water world")),
     MaterialMeshBundle {
-      mesh,
-      material,
+      mesh: Mesh3d(mesh),
+      material: MeshMaterial3d(material),
       transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
     },
@@ -113,8 +113,8 @@ fn setup(
   commands.spawn((
     Name::new(format!("Planet terrain")),
     MaterialMeshBundle {
-      mesh,
-      material,
+      mesh: Mesh3d(mesh),
+      material: MeshMaterial3d(material),
       transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
     },

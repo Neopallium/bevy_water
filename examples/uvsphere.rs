@@ -40,7 +40,7 @@ fn main() {
 
 fn toggle_wireframe(
   mut show_wireframe: Local<bool>,
-  query: Query<Entity, With<Handle<Mesh>>>,
+  query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
 ) {
   // Update flag.
@@ -69,19 +69,21 @@ fn setup(
     stacks: 36,
   }));
   // Water material.
-  let material = materials.add(StandardWaterMaterial {
-    base: default(),
-    extension: WaterMaterial {
-      amplitude: settings.amplitude,
-      coord_scale: Vec2::new(256.0, 256.0),
-      ..default()
-    },
-  });
+  let material = materials
+    .add(StandardWaterMaterial {
+      base: default(),
+      extension: WaterMaterial {
+        amplitude: settings.amplitude,
+        coord_scale: Vec2::new(256.0, 256.0),
+        ..default()
+      },
+    })
+    .into();
 
   commands.spawn((
     Name::new(format!("Water world")),
     MaterialMeshBundle {
-      mesh,
+      mesh: mesh.into(),
       material,
       transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()

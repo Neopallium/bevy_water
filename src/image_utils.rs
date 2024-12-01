@@ -1,11 +1,9 @@
 use bevy::{
+  image::ImageSampler,
   prelude::*,
-  render::{
-    render_resource::{
-      AddressMode, FilterMode, SamplerDescriptor, TextureFormat, TextureViewDescriptor,
-      TextureViewDimension,
-    },
-    texture::ImageSampler,
+  render::render_resource::{
+    AddressMode, FilterMode, SamplerDescriptor, TextureFormat, TextureViewDescriptor,
+    TextureViewDimension,
   },
 };
 

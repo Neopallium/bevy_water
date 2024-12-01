@@ -111,7 +111,7 @@ struct UiState {
 
 fn toggle_wireframe(
   input: Res<ButtonInput<KeyCode>>,
-  query: Query<Entity, With<Handle<Mesh>>>,
+  query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
   mut state: ResMut<UiState>,
 ) {
@@ -452,7 +452,7 @@ fn setup(
   );
 
   // Coast sand material.
-  let sandy = materials.add(StandardMaterial {
+  let sandy = MeshMaterial3d(materials.add(StandardMaterial {
     perceptual_roughness: 1.0,
     metallic: 0.0,
     reflectance: 0.5,
@@ -462,16 +462,16 @@ fn setup(
     cull_mode: None,
     double_sided: true,
     ..default()
-  });
+  }));
 
-  let floor_mesh = {
+  let floor_mesh = Mesh3d({
     let mut mesh = PlaneMeshBuilder::from_length(256.0 * 6.0)
       .subdivisions(25)
       .build();
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 50.0);
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Sea floor")),
     MaterialMeshBundle {
@@ -482,7 +482,7 @@ fn setup(
     },
   ));
 
-  let island_mesh = {
+  let island_mesh = Mesh3d({
     let mut mesh = Sphere::new(2.0)
       .mesh()
       .kind(SphereKind::Uv {
@@ -493,7 +493,7 @@ fn setup(
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 20.0);
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Sandy island")),
     MaterialMeshBundle {
@@ -511,7 +511,7 @@ fn setup(
         .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
-    FogSettings {
+    DistanceFog {
       color: Color::srgba(0.1, 0.2, 0.4, 1.0),
       //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
       //directional_light_exponent: 30.0,
@@ -542,6 +542,7 @@ fn setup(
     cam.insert(Skybox {
       image: asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 2000.0,
+      ..default()
     });
   }
 
@@ -554,7 +555,8 @@ fn setup(
   cam.insert(Name::new("Camera"));
 
   // Spawn ships.
-  let scene = asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0");
+  let scene =
+    SceneRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
   let ship = Ship::new(-0.400, -8.0, 9.0, -2.0, 2.0);
 
   // "Randomly" place the ships.

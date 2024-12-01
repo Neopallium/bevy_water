@@ -112,7 +112,7 @@ struct UiState {
 
 fn toggle_wireframe(
   input: Res<ButtonInput<KeyCode>>,
-  query: Query<Entity, With<Handle<Mesh>>>,
+  query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
   mut state: ResMut<UiState>,
 ) {
@@ -329,19 +329,19 @@ fn setup(
     .insert(Sun); // Marks the light as Sun
 
   // Terrain material.
-  let material = materials.add(StandardMaterial {
+  let material = MeshMaterial3d(materials.add(StandardMaterial {
     base_color: Color::srgba_u8(177, 168, 132, 255),
     perceptual_roughness: 0.6,
     metallic: 0.6,
     reflectance: 0.8,
     ..default()
-  });
+  }));
 
   // Spawn simple terrain plane.
   commands.spawn((
     Name::new(format!("Terrain")),
     MaterialMeshBundle {
-      mesh: meshes.add(PlaneMeshBuilder::from_length(256.0 * 6.0)),
+      mesh: Mesh3d(meshes.add(PlaneMeshBuilder::from_length(256.0 * 6.0))),
       material: material.clone(),
       transform: Transform::from_xyz(0.0, -5.0, 0.0),
       ..default()
@@ -352,7 +352,7 @@ fn setup(
   commands.spawn((
     Name::new(format!("Fake island")),
     MaterialMeshBundle {
-      mesh: meshes.add(Sphere::new(2.0)),
+      mesh: Mesh3d(meshes.add(Sphere::new(2.0))),
       material: material.clone(),
       transform: Transform::from_xyz(-30.0, -10.0, -30.0).with_scale(Vec3::new(30.0, 6.5, 30.0)),
       ..default()
@@ -367,7 +367,7 @@ fn setup(
         .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
       ..default()
     },
-    FogSettings {
+    DistanceFog {
       color: Color::srgba(0.1, 0.2, 0.4, 1.0),
       //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
       //directional_light_exponent: 30.0,
@@ -400,6 +400,7 @@ fn setup(
     cam.insert(Skybox {
       image: asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
       brightness: 2000.0,
+      ..default()
     });
   }
 
@@ -412,7 +413,7 @@ fn setup(
   cam.insert(Name::new("Camera"));
 
   // Spawn ships.
-  let scene = asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0");
+  let scene = SceneRoot(asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0"));
   let ship = Ship::new(-0.400, -3.8, 2.5, -1.4, 1.4);
 
   // "Randomly" place the ships.

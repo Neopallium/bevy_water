@@ -117,8 +117,8 @@ impl WaterTileBundle {
       name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
       tile: WaterTile { offset },
       mesh: MaterialMeshBundle {
-        mesh,
-        material,
+        mesh: Mesh3d(mesh),
+        material: MeshMaterial3d(material),
         transform: Transform::from_xyz(tile_pos.x, height, tile_pos.y),
         ..default()
       },

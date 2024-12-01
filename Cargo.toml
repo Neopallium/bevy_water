@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.14.2"
+version = "0.15.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -10,24 +10,21 @@ repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
 
 exclude = [
-	"examples/*",
-	"showcase.webp",
-	"assets/models/*",
-	"assets/textures/*",
-	"assets/environment_maps/*",
+  "examples/*",
+  "showcase.webp",
+  "assets/models/*",
+  "assets/textures/*",
+  "assets/environment_maps/*",
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass"]
+default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []
 
 # file/embed watcher
-file_watcher = [
-	"bevy/file_watcher",
-	"bevy/embedded_watcher",
-]
+file_watcher = ["bevy/file_watcher", "bevy/embedded_watcher"]
 
 # Enable inspector in examples.
 inspector = []
@@ -50,18 +47,25 @@ panorbit = []
 # Enable DepthPrepass in examples.
 depth_prepass = []
 
+# Include ImageUtils
+image_utils = ["bevy/jpeg"]
+
 # Select WebGL2 or WebGPU support.
 # Use webgl2 for native builds (non-wasm).
-webgl2 = [ "bevy/webgl2" ]
-webgpu = [ "bevy/webgpu" ]
+webgl2 = ["bevy/webgl2"]
+webgpu = ["bevy/webgpu"]
 
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.14.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+bevy = { version = "0.15.0", default-features = false, features = [
+  "bevy_asset",
+  "bevy_render",
+  "bevy_pbr",
+] }
 
 [dev-dependencies]
-bevy = { version = "0.14.0", features = [
+bevy = { version = "0.15.0", features = [
   "animation",
   "bevy_asset",
   "bevy_audio",
@@ -87,8 +91,8 @@ bevy = { version = "0.14.0", features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.25" }
-bevy_atmosphere = { version = "0.10" }
+bevy-inspector-egui = { version = "0.28" }
+#bevy_atmosphere = { version = "0.10" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-bevy_spectator = { version = "0.6" }
-bevy_panorbit_camera = { version = "0.19", features = ["bevy_egui"] }
+#bevy_spectator = { version = "0.6" }
+bevy_panorbit_camera = { version = "0.20", features = ["bevy_egui"] }

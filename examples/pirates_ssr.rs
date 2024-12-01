@@ -42,9 +42,7 @@ const SPEED_MAX: f32 = 1.0;
 fn main() {
   let mut app = App::new();
   #[cfg(feature = "ssr")]
-  app
-    .insert_resource(Msaa::Off)
-    .insert_resource(DefaultOpaqueRendererMethod::deferred());
+  app.insert_resource(DefaultOpaqueRendererMethod::deferred());
 
   app
     // Tell the asset server to watch for asset changes on disk:
@@ -122,7 +120,7 @@ struct UiState {
 
 fn toggle_wireframe(
   input: Res<ButtonInput<KeyCode>>,
-  query: Query<Entity, With<Handle<Mesh>>>,
+  query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
   mut state: ResMut<UiState>,
 ) {
@@ -387,7 +385,7 @@ fn setup(
   );
 
   // Coast sand material.
-  let sandy = materials.add(StandardMaterial {
+  let sandy = MeshMaterial3d(materials.add(StandardMaterial {
     perceptual_roughness: 1.0,
     metallic: 0.0,
     reflectance: 0.5,
@@ -397,16 +395,16 @@ fn setup(
     cull_mode: None,
     double_sided: true,
     ..default()
-  });
+  }));
 
-  let floor_mesh = {
+  let floor_mesh = Mesh3d({
     let mut mesh = PlaneMeshBuilder::from_length(256.0 * 6.0)
       .subdivisions(25)
       .build();
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 50.0);
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Sea floor")),
     MaterialMeshBundle {
@@ -417,7 +415,7 @@ fn setup(
     },
   ));
 
-  let island_mesh = {
+  let island_mesh = Mesh3d({
     let mut mesh = Sphere::new(2.0)
       .mesh()
       .kind(SphereKind::Uv {
@@ -428,7 +426,7 @@ fn setup(
     mesh.generate_tangents().expect("tangents");
     scale_uvs(&mut mesh, 20.0);
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Sandy island")),
     MaterialMeshBundle {
@@ -439,14 +437,14 @@ fn setup(
     },
   ));
 
-  let shiny = materials.add(StandardMaterial {
+  let shiny = MeshMaterial3d(materials.add(StandardMaterial {
     base_color: Color::srgba(0.1, 0.2, 0.4, 1.0),
     perceptual_roughness: 0.0,
     metallic: 1.0,
     reflectance: 1.0,
     ..default()
-  });
-  let orb_mesh = {
+  }));
+  let orb_mesh = Mesh3d({
     let mut mesh = Sphere::new(1.0)
       .mesh()
       .kind(SphereKind::Uv {
@@ -456,7 +454,7 @@ fn setup(
       .build();
     mesh.generate_tangents().expect("tangents");
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Orb")),
     MaterialMeshBundle {
@@ -466,11 +464,11 @@ fn setup(
       ..default()
     },
   ));
-  let box_mesh = {
+  let box_mesh = Mesh3d({
     let mut mesh = Cuboid::from_length(1.0).mesh().build();
     mesh.generate_tangents().expect("tangents");
     meshes.add(mesh)
-  };
+  });
   commands.spawn((
     Name::new(format!("Box")),
     MaterialMeshBundle {
@@ -492,8 +490,9 @@ fn setup(
       diffuse_map: asset_server.load("environment_maps/kloppenheim_01_puresky_4k_diffuse.ktx2"),
       specular_map: asset_server.load("environment_maps/kloppenheim_01_puresky_4k_specular.ktx2"),
       intensity: 1000.0,
+      ..default()
     },
-    FogSettings {
+    DistanceFog {
       color: Color::srgba(0.1, 0.2, 0.4, 1.0),
       //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
       //directional_light_exponent: 30.0,
@@ -507,7 +506,7 @@ fn setup(
   ));
 
   #[cfg(feature = "ssr")]
-  cam.insert(ScreenSpaceReflectionsBundle::default());
+  cam.insert((ScreenSpaceReflectionsBundle::default(), Msaa::Off));
 
   #[cfg(feature = "spectator")]
   cam.insert(Spectator);
@@ -529,6 +528,7 @@ fn setup(
     cam.insert(Skybox {
       image: asset_server.load("environment_maps/kloppenheim_01_puresky_4k_cubemap.ktx2"),
       brightness: 1000.0,
+      ..default()
     });
   }
 
@@ -541,7 +541,8 @@ fn setup(
   cam.insert(Name::new("Camera"));
 
   // Spawn ships.
-  let scene = asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0");
+  let scene =
+    SceneRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
   let ship = Ship::new(-0.400, -8.0, 9.0, -2.0, 2.0);
 
   // "Randomly" place the ships.

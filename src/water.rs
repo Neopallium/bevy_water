@@ -84,45 +84,27 @@ impl Default for WaterSettings {
   }
 }
 
-#[derive(Bundle, Default)]
-pub struct WaterBundle {
-  pub name: Name,
-  pub spatial: SpatialBundle,
-}
+#[derive(Component, Default)]
+#[require(Transform, Visibility)]
+pub struct WaterTiles;
 
 #[derive(Component, Default)]
+#[require(Mesh3d, MeshMaterial3d<StandardWaterMaterial>, Transform, Visibility)]
 pub struct WaterTile {
   pub offset: Vec2,
 }
 
-#[derive(Bundle, Default)]
-pub struct WaterTileBundle {
-  pub name: Name,
-  pub tile: WaterTile,
-  pub mesh: MaterialMeshBundle<StandardWaterMaterial>,
-}
-
-impl WaterTileBundle {
-  pub fn new(
-    mesh: Handle<Mesh>,
-    material: Handle<StandardWaterMaterial>,
-    height: f32,
-    offset: Vec2,
-  ) -> Self {
+impl WaterTile {
+  pub fn new(height: f32, offset: Vec2) -> (Self, Name, Transform) {
     // The tile position is based on the center of the tile,
     // so we need to add `WATER_HALF_SIZE` so the tile corner absolute position
     // will match `coord` in the water shader.
     let tile_pos = offset + WATER_HALF_SIZE;
-    Self {
-      name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
-      tile: WaterTile { offset },
-      mesh: MaterialMeshBundle {
-        mesh: Mesh3d(mesh),
-        material: MeshMaterial3d(material),
-        transform: Transform::from_xyz(tile_pos.x, height, tile_pos.y),
-        ..default()
-      },
-    }
+    (
+      WaterTile { offset },
+      Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
+      Transform::from_xyz(tile_pos.x, height, tile_pos.y),
+    )
   }
 }
 
@@ -149,13 +131,10 @@ fn setup_water(
   };
 
   // Generate mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(plane_builder);
+  let mesh = Mesh3d(meshes.add(plane_builder));
 
   commands
-    .spawn(WaterBundle {
-      name: Name::new("Water"),
-      ..default()
-    })
+    .spawn((WaterTiles, Name::new("Water")))
     .with_children(|parent| {
       let grid_center = (WATER_SIZE * WATER_GRID_SIZE) as f32 / 2.0;
       for x in 0..grid.x {
@@ -165,7 +144,7 @@ fn setup_water(
           // UV starts at (0,0) at the corner.
           let coord_offset = Vec2::new(x, y);
           // Water material.
-          let material = materials.add(StandardWaterMaterial {
+          let material = MeshMaterial3d(materials.add(StandardWaterMaterial {
             base: StandardMaterial {
               base_color: settings.base_color,
               #[cfg(not(feature = "ssr"))]
@@ -186,10 +165,12 @@ fn setup_water(
               quality: settings.water_quality.into(),
               ..default()
             },
-          });
+          }));
 
           let mut tile_bundle = parent.spawn((
-            WaterTileBundle::new(mesh.clone(), material, water_height, coord_offset),
+            WaterTile::new(water_height, coord_offset),
+            mesh.clone(),
+            material,
             NotShadowCaster,
           ));
 

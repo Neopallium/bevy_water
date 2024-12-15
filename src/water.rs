@@ -7,7 +7,7 @@ use material::*;
 
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
-pub const WATER_GRID_SIZE: u32 = 6;
+pub const DEFAULT_WATER_GRID_SIZE: u32 = 6;
 
 #[derive(Debug, Clone, Copy, Reflect)]
 #[repr(u32)]
@@ -78,7 +78,7 @@ impl Default for WaterSettings {
       edge_scale: 0.1,
       edge_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
       update_materials: true,
-      spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
+      spawn_tiles: Some(UVec2::new(DEFAULT_WATER_GRID_SIZE, DEFAULT_WATER_GRID_SIZE)),
       water_quality: WaterQuality::Ultra,
     }
   }
@@ -109,7 +109,7 @@ impl WaterTile {
 }
 
 /// Setup water.
-fn setup_water(
+pub fn setup_water(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -136,17 +136,19 @@ fn setup_water(
   commands
     .spawn((WaterTiles, Name::new("Water")))
     .with_children(|parent| {
-      let grid_center = (WATER_SIZE * WATER_GRID_SIZE) as f32 / 2.0;
+      let grid_center_x = (WATER_SIZE * grid.x) as f32 / 2.0;
+      let grid_center_y = (WATER_SIZE * grid.y) as f32 / 2.0;
       for x in 0..grid.x {
         for y in 0..grid.y {
-          let x = (x * WATER_SIZE) as f32 - grid_center;
-          let y = (y * WATER_SIZE) as f32 - grid_center;
+          let x = (x * WATER_SIZE) as f32 - grid_center_x;
+          let y = (y * WATER_SIZE) as f32 - grid_center_y;
           // UV starts at (0,0) at the corner.
           let coord_offset = Vec2::new(x, y);
           // Water material.
           let material = MeshMaterial3d(materials.add(StandardWaterMaterial {
             base: StandardMaterial {
               base_color: settings.base_color,
+              alpha_mode: settings.alpha_mode,
               #[cfg(not(feature = "ssr"))]
               perceptual_roughness: 0.22,
               #[cfg(feature = "ssr")]
@@ -185,7 +187,7 @@ fn setup_water(
     });
 }
 
-fn update_materials(
+pub fn update_materials(
   settings: Res<WaterSettings>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {

@@ -7,7 +7,7 @@ use material::*;
 
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
-pub const DEFAULT_WATER_GRID_SIZE: u32 = 6;
+pub const WATER_GRID_SIZE: u32 = 6;
 
 #[derive(Debug, Clone, Copy, Reflect)]
 #[repr(u32)]
@@ -78,7 +78,7 @@ impl Default for WaterSettings {
       edge_scale: 0.1,
       edge_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
       update_materials: true,
-      spawn_tiles: Some(UVec2::new(DEFAULT_WATER_GRID_SIZE, DEFAULT_WATER_GRID_SIZE)),
+      spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
       water_quality: WaterQuality::Ultra,
     }
   }

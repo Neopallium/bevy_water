@@ -168,18 +168,18 @@ impl CycleTimer {
   }
 
   pub fn tick(&mut self, delta: Duration) {
-    if !self.paused() {
+    if !self.is_paused() {
       self.update.tick(delta);
       self.time.tick(delta.mul_f32(self.speed));
     }
   }
 
-  pub fn paused(&self) -> bool {
-    self.time.paused()
+  pub fn is_paused(&self) -> bool {
+    self.time.is_paused()
   }
 
   pub fn toggle_pause(&mut self) {
-    if self.time.paused() {
+    if self.time.is_paused() {
       self.time.unpause();
     } else {
       self.time.pause();
@@ -229,7 +229,7 @@ pub fn daylight_cycle(
   time: Res<Time>,
 ) {
   // Do nothing if timer is paused.
-  if timer.paused() {
+  if timer.is_paused() {
     return;
   }
 

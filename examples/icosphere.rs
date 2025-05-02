@@ -32,7 +32,7 @@ fn main() {
     })
     .add_plugins(WaterPlugin)
     // Wireframe
-    .add_plugins(WireframePlugin)
+    .add_plugins(WireframePlugin::default())
     .add_systems(Startup, setup)
     .add_systems(
       Update,

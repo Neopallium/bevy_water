@@ -82,7 +82,7 @@ pub fn pirates_app(title: &str) -> App {
     // Quit on `Q` press.
     .add_systems(Update, handle_quit)
     // Wireframe
-    .add_plugins(WireframePlugin)
+    .add_plugins(WireframePlugin::default())
     .init_resource::<UiState>()
     .add_systems(Update, toggle_wireframe);
 
@@ -113,7 +113,7 @@ pub fn main() {
 
 pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
-    exit.send(AppExit::Success);
+    exit.write(AppExit::Success);
   }
 }
 

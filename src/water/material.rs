@@ -1,5 +1,5 @@
 use bevy::{
-  asset::load_internal_asset,
+  asset::{load_internal_asset, weak_handle},
   pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline},
   prelude::*,
   reflect::{std_traits::ReflectDefault, Reflect},
@@ -88,19 +88,19 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
   }
 }
 
-pub const NOISE_FBM_HANDLE: Handle<Shader> = Handle::weak_from_u128(0x47c86614dedb33fe);
+pub const NOISE_FBM_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-78e6-9e95-669f43d631f4");
 
-pub const NOISE_RANDOM_HANDLE: Handle<Shader> = Handle::weak_from_u128(0x339ea286e4c7be3e);
+pub const NOISE_RANDOM_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-76a1-a5eb-5eec34b09b99");
 
-pub const NOISE_VNOISE_HANDLE: Handle<Shader> = Handle::weak_from_u128(0x2cb48f03a340aedc);
+pub const NOISE_VNOISE_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-7000-b5eb-93ec377e4060");
 
-pub const WATER_BINDINGS_HANDLE: Handle<Shader> = Handle::weak_from_u128(0xa9010bab18132e4b);
+pub const WATER_BINDINGS_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-7024-a6dc-1d4843336463");
 
-pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> = Handle::weak_from_u128(0xb73bf2f50994c394);
+pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-7a6e-b944-022ae6bb4fa9");
 
-pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> = Handle::weak_from_u128(0xcea5177230c961ac);
+pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-73a2-9223-08d5fedf602c");
 
-pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> = Handle::weak_from_u128(0xbe72b1f6760558cb);
+pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> = weak_handle!("01968d7d-6cec-756e-9dc8-ccf5afaf5bb0");
 
 #[cfg(feature = "embed_shaders")]
 fn water_fragment_shader() -> ShaderRef {

@@ -5,13 +5,13 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::render::mesh::*;
+use bevy::mesh::*;
 use bevy::{
   app::AppExit,
-  pbr::light_consts::lux,
-  core_pipeline::experimental::taa::{TemporalAntiAliasPlugin, TemporalAntiAliasing},
+  light::light_consts::lux,
+  anti_alias::taa::TemporalAntiAliasing,
   prelude::*,
-  render::{mesh::VertexAttributeValues, render_resource::TextureFormat},
+  render::render_resource::TextureFormat,
 };
 #[cfg(feature = "atmosphere")]
 use bevy::{time::Stopwatch, utils::Duration};
@@ -45,7 +45,7 @@ pub fn pirates_app(title: &str) -> App {
         .set(WindowPlugin {
           primary_window: Some(Window {
             title: title.to_string(),
-            resolution: (1200., 600.).into(),
+            resolution: (1200, 600).into(),
             ..Default::default()
           }),
           ..default()
@@ -69,8 +69,7 @@ pub fn pirates_app(title: &str) -> App {
 
   // Improve shadows.
   app
-    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
-    .add_plugins(TemporalAntiAliasPlugin)
+    .insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -124,7 +123,7 @@ pub fn main() {
   app.run();
 }
 
-pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
+pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
     exit.write(AppExit::Success);
   }
@@ -470,7 +469,7 @@ pub fn setup_orb(
 /// Create a simple 3D camera
 pub fn make_camera<'a>(
   commands: &'a mut Commands,
-  asset_server: &AssetServer,
+  _asset_server: &AssetServer,
 ) -> EntityCommands<'a> {
   // camera
   let mut cam = commands.spawn((
@@ -519,15 +518,17 @@ pub fn make_camera<'a>(
   #[cfg(not(feature = "atmosphere"))]
   {
     use bevy::{
-      core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
+      core_pipeline::tonemapping::Tonemapping,
+      post_process::bloom::Bloom,
       pbr::{Atmosphere, AtmosphereSettings},
-      render::camera::Exposure,
+      render::view::Hdr,
+      camera::Exposure,
     };
     cam.insert((
     Camera {
-      hdr: true,
       ..default()
     },
+    Hdr,
     Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
     Atmosphere::EARTH,
     AtmosphereSettings {

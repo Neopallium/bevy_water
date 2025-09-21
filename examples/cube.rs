@@ -2,7 +2,7 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::pbr::NotShadowCaster;
+use bevy::light::NotShadowCaster;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "atmosphere")]

@@ -3,8 +3,8 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::color::palettes::css::OLIVE;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::pbr::NotShadowCaster;
-use bevy::render::mesh::*;
+use bevy::light::NotShadowCaster;
+use bevy::mesh::*;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "panorbit")]

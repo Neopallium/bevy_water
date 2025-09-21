@@ -2,7 +2,7 @@
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
 use bevy::{
-  core_pipeline::experimental::taa::{TemporalAntiAliasPlugin, TemporalAntiAliasing},
+  anti_alias::taa::TemporalAntiAliasing,
   prelude::*,
 };
 
@@ -11,8 +11,6 @@ use pirates::*;
 
 fn main() {
   let mut app = pirates_app("Pirates with TAA");
-
-  app.add_plugins(TemporalAntiAliasPlugin);
 
   // Setup
   app.add_systems(

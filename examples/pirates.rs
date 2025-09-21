@@ -8,11 +8,11 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::render::mesh::*;
+use bevy::mesh::*;
 use bevy::{
   app::AppExit,
   prelude::*,
-  render::{mesh::VertexAttributeValues, render_resource::TextureFormat},
+  render::{render_resource::TextureFormat},
 };
 #[cfg(feature = "atmosphere")]
 use bevy::{time::Stopwatch, utils::Duration};
@@ -46,7 +46,7 @@ pub fn pirates_app(title: &str) -> App {
         .set(WindowPlugin {
           primary_window: Some(Window {
             title: title.to_string(),
-            resolution: (1200., 600.).into(),
+            resolution: (1200, 600).into(),
             ..Default::default()
           }),
           ..default()
@@ -70,7 +70,7 @@ pub fn pirates_app(title: &str) -> App {
 
   // Improve shadows.
   app
-    .insert_resource(bevy::pbr::DirectionalLightShadowMap { size: 4 * 1024 })
+    .insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -111,7 +111,7 @@ pub fn main() {
   app.run();
 }
 
-pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
+pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
   if input.pressed(KeyCode::KeyQ) {
     exit.write(AppExit::Success);
   }

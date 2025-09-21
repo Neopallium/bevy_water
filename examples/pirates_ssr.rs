@@ -3,7 +3,7 @@
 
 use bevy::pbr::{DefaultOpaqueRendererMethod, ScreenSpaceReflections};
 use bevy::prelude::*;
-use bevy::render::mesh::*;
+use bevy::mesh::*;
 
 mod pirates;
 use pirates::*;

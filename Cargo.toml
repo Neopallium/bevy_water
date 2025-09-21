@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.16.0"
+version = "0.17.0-rc1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -58,7 +58,7 @@ webgpu = ["bevy/webgpu"]
 [dependencies]
 anyhow = "1.0"
 
-bevy = { version = "0.16.0", default-features = false, features = [
+bevy = { version = "=0.17.0-rc.1", default-features = false, features = [
   "bevy_asset",
   "bevy_render",
   "bevy_pbr",
@@ -66,7 +66,7 @@ bevy = { version = "0.16.0", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-bevy = { version = "0.16.0", features = [
+bevy = { version = "=0.17.0-rc.1", features = [
   "animation",
   "bevy_asset",
   "bevy_audio",
@@ -85,7 +85,6 @@ bevy = { version = "0.16.0", features = [
   "jpeg",
   "hdr",
   "ktx2",
-  "zstd",
   "vorbis",
   "x11",
   "bevy_gizmos",
@@ -93,8 +92,8 @@ bevy = { version = "0.16.0", features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.31" }
-#bevy_atmosphere = { version = "0.13" }
-#bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-bevy_spectator = { version = "0.8" }
-bevy_panorbit_camera = { version = "0.20", features = ["bevy_egui"] }
+#bevy-inspector-egui = { version = "0.31" }
+##bevy_atmosphere = { version = "0.13" }
+##bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
+#bevy_spectator = { version = "0.8" }
+#bevy_panorbit_camera = { version = "0.20", features = ["bevy_egui"] }

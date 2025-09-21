@@ -1,6 +1,6 @@
-use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
+use bevy::light::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
-use bevy::render::mesh::*;
+use bevy::mesh::*;
 
 pub mod material;
 use material::*;

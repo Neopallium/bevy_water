@@ -1,9 +1,9 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
+use bevy::light::NotShadowCaster;
+use bevy::mesh::primitives::SphereKind;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::pbr::NotShadowCaster;
-use bevy::render::mesh::*;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "atmosphere")]

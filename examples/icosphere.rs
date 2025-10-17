@@ -2,9 +2,9 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 use bevy::color::palettes::css::OLIVE;
-use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::light::NotShadowCaster;
 use bevy::mesh::*;
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "panorbit")]
@@ -133,7 +133,7 @@ fn setup(
   ));
   #[cfg(feature = "panorbit")]
   let mut cam = commands.spawn((
-    Camera3dBundle { ..default() },
+    Camera3d::default(),
     PanOrbitCamera {
       focus: Vec3::new(0.0, 0.0, 0.0),
       radius: Some(RADIUS + 15.0),

@@ -10,6 +10,10 @@ use derive_more::Debug;
 pub mod material;
 use material::*;
 
+pub mod easings {
+  pub use bevy_easings::*;
+}
+
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;

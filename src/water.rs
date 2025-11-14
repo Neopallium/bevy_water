@@ -1,6 +1,11 @@
+use std::time::Duration;
+
 use bevy::light::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
 use bevy::mesh::*;
+use bevy_easings::{Ease, EaseMethod, EasingsPlugin};
+pub use bevy_easings::{EaseFunction, EasingType};
+use derive_more::Debug;
 
 pub mod material;
 use material::*;
@@ -30,12 +35,20 @@ impl Into<u32> for WaterQuality {
 }
 
 #[derive(Resource, Clone, Debug, Reflect)]
-#[reflect(Resource)]
+#[reflect(Resource, Default)]
 pub struct WaterSettings {
   /// StandardMaterial setting.
   pub alpha_mode: AlphaMode,
   /// Base water height.
   pub height: f32,
+  /// Easing method for `height` changes.
+  #[reflect(ignore)]
+  #[debug(skip)]
+  pub height_easing_method: EaseMethod,
+  /// Easing type for `height` changes.
+  #[reflect(ignore)]
+  #[debug(skip)]
+  pub height_easing_type: EasingType,
   /// Wave amplitude.
   pub amplitude: f32,
   /// The `StandardMaterial` base_color field.  This is the base color of the water.
@@ -70,6 +83,8 @@ impl Default for WaterSettings {
       #[cfg(feature = "ssr")]
       alpha_mode: AlphaMode::Opaque,
       height: 1.0,
+      height_easing_method: EaseMethod::Linear,
+      height_easing_type: EasingType::Once { duration: Duration::from_secs(1) },
       amplitude: 1.0,
       clarity: 0.25,
       base_color: Color::srgba(1.0, 1.0, 1.0, 1.0),
@@ -188,9 +203,30 @@ pub fn setup_water(
 }
 
 pub fn update_materials(
+  mut commands: Commands,
   settings: Res<WaterSettings>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
+  water_transforms: Query<(Entity, &Transform), With<WaterTile>>,
 ) {
+  // Apply height easing to all water tiles if height has changed
+  for (entity, transform) in water_transforms.iter() {
+    if transform.translation.y != settings.height {
+      let target_transform = Transform::from_xyz(
+        transform.translation.x,
+        settings.height,
+        transform.translation.z,
+      );
+
+      commands.entity(entity).insert(
+        transform.ease_to(
+          target_transform,
+          settings.height_easing_method,
+          settings.height_easing_type,
+        )
+      );
+    }
+  }
+
   if !settings.update_materials {
     // Don't update water materials.
     return;
@@ -216,7 +252,7 @@ impl Plugin for WaterPlugin {
     app
       .init_resource::<WaterSettings>()
       .register_type::<WaterSettings>()
-      .add_plugins(WaterMaterialPlugin)
+      .add_plugins((WaterMaterialPlugin, EasingsPlugin::default()))
       .add_systems(Startup, setup_water)
       .add_systems(
         Update,

@@ -23,7 +23,12 @@ impl<'w> WaterParam<'w> {
     let time = self.time.elapsed_secs_wrapped();
     self.settings.height
       + self.settings.amplitude
-        * get_wave_height_2d(time, position.xz(), self.settings.water_quality.into())
+        * get_wave_height_2d(
+          time,
+          position.xz(),
+          self.settings.wave_direction,
+          self.settings.water_quality.into(),
+        )
   }
 
   /// Calculates the point of the waves at the given position.

@@ -31,11 +31,18 @@ pub struct WaterMaterial {
   pub amplitude: f32,
   pub coord_offset: Vec2,
   pub coord_scale: Vec2,
+  /// Wave direction A (fading out during transition).
+  pub wave_dir_a: Vec2,
+  /// Wave direction B (fading in during transition).
+  pub wave_dir_b: Vec2,
+  /// Blend factor between directions: 0 = fully A, 1 = fully B.
+  pub wave_blend: f32,
   pub quality: u32,
 }
 
 impl Default for WaterMaterial {
   fn default() -> Self {
+    let default_dir = Vec2::new(1.0, 2.0).normalize();
     Self {
       clarity: 0.1,
       deep_color: Color::srgba(0.2, 0.41, 0.54, 1.0),
@@ -45,6 +52,9 @@ impl Default for WaterMaterial {
       amplitude: 1.0,
       coord_offset: Vec2::new(0.0, 0.0),
       coord_scale: Vec2::new(1.0, 1.0),
+      wave_dir_a: default_dir,
+      wave_dir_b: default_dir,
+      wave_blend: 1.0,
       quality: 4,
     }
   }
@@ -73,6 +83,9 @@ pub struct WaterMaterialUniform {
   pub amplitude: f32,
   pub clarity: f32,
   pub edge_scale: f32,
+  pub wave_blend: f32,
+  pub wave_dir_a: Vec2,
+  pub wave_dir_b: Vec2,
 }
 
 impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
@@ -86,6 +99,9 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
       edge_color: self.edge_color.to_linear().to_vec4(),
       coord_offset: self.coord_offset,
       coord_scale: self.coord_scale,
+      wave_dir_a: self.wave_dir_a,
+      wave_dir_b: self.wave_dir_b,
+      wave_blend: self.wave_blend,
     }
   }
 }

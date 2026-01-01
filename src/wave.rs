@@ -72,26 +72,42 @@ fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
   t * t * (3.0 - 2.0 * t)
 }
 
-fn wave(g_time: f32, p: Vec2) -> f32 {
+fn wave(p: Vec2, g_time: f32) -> f32 {
+  // Internal time creates fluid oscillation within the pattern
   let time = g_time * 0.5 + 23.0;
-
   let time_x = time / 1.0;
   let time_y = time / 0.5;
-  let wave_len_x = 5.0;
-  let wave_len_y = 2.0;
-  let wave_x = (p.x / wave_len_x + time_x).cos();
-  let wave_y = smoothstep(1.0, 0.0, (p.y / wave_len_y + wave_x + time_y).sin().abs());
+  // Pattern oriented so primary motion is along X (travel direction after rotation)
+  let wave_len_x = 2.0;
+  let wave_len_y = 5.0;
+  let wave_y = (p.y / wave_len_y + time_y).cos();
+  let wave_x = smoothstep(1.0, 0.0, (p.x / wave_len_x + wave_y + time_x).sin().abs());
   let n = fbm(p) / 2.0 - 1.0;
-  return wave_y + n;
+  return wave_x + n;
 }
 
-pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2) -> f32 {
+/// Sample wave pattern for a single direction.
+fn sample_directional_wave(p: Vec2, time: f32, g_time: f32, wave_direction: Vec2) -> f32 {
+  let dir = wave_direction.normalize_or_zero();
+  // Rotate coordinates so wave ridges are perpendicular to travel direction
+  // Negate x-component so waves travel along dir, not against it
+  let rotated_p = Vec2::new(
+    -(p.x * dir.x + p.y * dir.y),
+    p.y * dir.x - p.x * dir.y
+  );
+
+  // Multiple layers with counter-directional scrolling for volume
+  let time_vec = Vec2::splat(time);
+  let mut d = wave((rotated_p - time_vec) * 0.3, g_time) * 0.3;
+  d = d + wave((rotated_p + time_vec) * 0.4, g_time) * 0.3;
+  d = d + wave((rotated_p + time_vec) * 0.5, g_time) * 0.2;
+  d = d + wave((rotated_p + time_vec) * 0.6, g_time) * 0.2;
+  d
+}
+
+pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2, wave_direction: Vec2) -> f32 {
   let time = g_time / 2.0;
-  let mut d = wave(g_time, (p + time) * 0.4) * 0.3;
-  d = d + wave(g_time, (p - time) * 0.3) * 0.3;
-  d = d + wave(g_time, (p + time) * 0.5) * 0.2;
-  d = d + wave(g_time, (p - time) * 0.6) * 0.2;
-  return d;
+  sample_directional_wave(p, time, g_time, wave_direction)
 }
 
 /// Calculate wave height at global position `pos`.
@@ -99,9 +115,10 @@ pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2) -> f32 {
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.
 /// `base_height` - The base height from `WaterSettings`.
 /// `amplitude` - The amplitude of the wave.
+/// `wave_direction` - The wave movement direction.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_height(time: f32, base_height: f32, amplitude: f32, pos: Vec3) -> f32 {
-  get_wave_height_2d(time, Vec2::new(pos.x, pos.z)) * amplitude + base_height
+pub fn get_wave_height(time: f32, base_height: f32, amplitude: f32, wave_direction: Vec2, pos: Vec3) -> f32 {
+  get_wave_height_2d(time, Vec2::new(pos.x, pos.z), wave_direction) * amplitude + base_height
 }
 
 /// Calculate wave height at global position `pos` and return a point
@@ -110,8 +127,9 @@ pub fn get_wave_height(time: f32, base_height: f32, amplitude: f32, pos: Vec3) -
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.
 /// `base_height` - The base height from `WaterSettings`.
 /// `amplitude` - The amplitude of the wave.
+/// `wave_direction` - The wave movement direction.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_point(time: f32, base_height: f32, amplitude: f32, mut pos: Vec3) -> Vec3 {
-  pos.y = get_wave_height(time, base_height, amplitude, pos);
+pub fn get_wave_point(time: f32, base_height: f32, amplitude: f32, wave_direction: Vec2, mut pos: Vec3) -> Vec3 {
+  pos.y = get_wave_height(time, base_height, amplitude, wave_direction, pos);
   pos
 }

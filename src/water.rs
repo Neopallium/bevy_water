@@ -7,6 +7,114 @@ pub use bevy_easings::{Ease, EaseFunction, EaseMethod, EasingType, EasingsPlugin
 pub mod material;
 use material::*;
 
+/// Component for tracking wave direction using dual-direction crossfade blending.
+///
+/// Instead of rotating waves (which looks unnatural), this crossfades between
+/// two independent wave patterns: the old direction fading out while the new
+/// direction fades in. This matches how real water responds to changing wind.
+#[derive(Component, Clone, Copy, Debug)]
+pub struct WaveDirection {
+  /// Direction A (fading out).
+  dir_a: Vec2,
+  /// Direction B (fading in).
+  dir_b: Vec2,
+  /// Blend factor: 0 = fully A, 1 = fully B.
+  blend: f32,
+  /// Blend duration in seconds.
+  blend_duration: f32,
+  /// Per-tile offset for desynchronized transitions (0.0-0.3 typical).
+  pub tile_offset: f32,
+}
+
+impl Default for WaveDirection {
+  fn default() -> Self {
+    Self::new(Vec2::new(1.0, 2.0))
+  }
+}
+
+impl WaveDirection {
+  /// Create a new WaveDirection from a direction vector.
+  pub fn new(direction: Vec2) -> Self {
+    let normalized = direction.normalize_or_zero();
+    Self {
+      dir_a: normalized,
+      dir_b: normalized,
+      blend: 1.0, // Start fully blended (no transition)
+      blend_duration: 2.0,
+      tile_offset: 0.0,
+    }
+  }
+
+  /// Create a new WaveDirection with custom blend duration.
+  pub fn with_duration(direction: Vec2, blend_duration: f32) -> Self {
+    let normalized = direction.normalize_or_zero();
+    Self {
+      dir_a: normalized,
+      dir_b: normalized,
+      blend: 1.0,
+      blend_duration,
+      tile_offset: 0.0,
+    }
+  }
+
+  /// Set a new target direction. Starts crossfade from current state.
+  pub fn set_target(&mut self, target: Vec2) {
+    let normalized = target.normalize_or_zero();
+
+    // Don't restart if already heading to this target
+    if (self.dir_b - normalized).length_squared() < 0.001 {
+      return;
+    }
+
+    // Snapshot current blended state as "old" direction
+    self.dir_a = self.current_blended();
+    self.dir_b = normalized;
+    self.blend = 0.0;
+  }
+
+  /// Set the blend duration in seconds.
+  pub fn set_duration(&mut self, duration: f32) {
+    self.blend_duration = duration;
+  }
+
+  /// Update the blend. Call this every frame.
+  pub fn update(&mut self, dt: f32) {
+    if self.blend < 1.0 {
+      self.blend = (self.blend + dt / self.blend_duration).min(1.0);
+    }
+  }
+
+  /// Get direction A (fading out).
+  pub fn dir_a(&self) -> Vec2 {
+    self.dir_a
+  }
+
+  /// Get direction B (fading in).
+  pub fn dir_b(&self) -> Vec2 {
+    self.dir_b
+  }
+
+  /// Get the raw blend factor (0-1).
+  pub fn blend(&self) -> f32 {
+    self.blend
+  }
+
+  /// Get the effective blend with tile offset applied.
+  pub fn effective_blend(&self) -> f32 {
+    (self.blend - self.tile_offset).clamp(0.0, 1.0)
+  }
+
+  /// Get the current blended direction (for physics/CPU calculations).
+  pub fn current_blended(&self) -> Vec2 {
+    self.dir_a.lerp(self.dir_b, self.blend).normalize_or_zero()
+  }
+
+  /// Check if the blend is complete.
+  pub fn is_settled(&self) -> bool {
+    self.blend >= 1.0
+  }
+}
+
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;
@@ -62,6 +170,11 @@ pub struct WaterSettings {
   /// Water quality
   ///
   pub water_quality: WaterQuality,
+  /// Wave movement direction.
+  pub wave_direction: Vec2,
+  /// Duration in seconds for wave direction crossfade transitions.
+  /// Default: 2.0. Longer = more gradual, imperceptible transitions.
+  pub wave_direction_blend_duration: f32,
 }
 
 impl Default for WaterSettings {
@@ -82,6 +195,8 @@ impl Default for WaterSettings {
       update_materials: true,
       spawn_tiles: Some(UVec2::new(WATER_GRID_SIZE, WATER_GRID_SIZE)),
       water_quality: WaterQuality::Ultra,
+      wave_direction: Vec2::new(1.0, 2.0),
+      wave_direction_blend_duration: 2.0,
     }
   }
 }
@@ -171,6 +286,11 @@ pub fn setup_water(
           // UV starts at (0,0) at the corner.
           let coord_offset = Vec2::new(x, y);
           // Water material.
+          // Per-tile offset for desynchronized transitions (based on tile position)
+          let tile_hash = ((x as i32).wrapping_mul(73856093) ^ (y as i32).wrapping_mul(19349663)) as f32;
+          let tile_offset = (tile_hash.abs() % 1000.0) / 1000.0 * 0.3; // 0-0.3 range
+
+          let normalized_dir = settings.wave_direction.normalize_or_zero();
           let material = MeshMaterial3d(materials.add(StandardWaterMaterial {
             base: StandardMaterial {
               base_color: settings.base_color,
@@ -190,15 +310,24 @@ pub fn setup_water(
               edge_scale: settings.edge_scale,
               coord_offset,
               coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
+              wave_dir_a: normalized_dir,
+              wave_dir_b: normalized_dir,
+              wave_blend: 1.0,
               quality: settings.water_quality.into(),
-              ..default()
             },
           }));
+
+          let mut wave_dir = WaveDirection::with_duration(
+            settings.wave_direction,
+            settings.wave_direction_blend_duration,
+          );
+          wave_dir.tile_offset = tile_offset;
 
           let mut tile_bundle = parent.spawn((
             WaterTile::new(water_height, coord_offset),
             mesh.clone(),
             material,
+            wave_dir,
             NotShadowCaster,
           ));
 
@@ -218,10 +347,10 @@ pub fn update_water_height(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   easing_settings: Res<WaterHeightEasingSettings>,
-  water_transforms: Query<(Entity, &Transform), With<WaterTile>>,
+  mut water_transforms: Query<(Entity, &Transform, &mut WaveDirection), With<WaterTile>>,
 ) {
-  // Apply height easing to all water tiles if height has changed
-  for (entity, transform) in water_transforms.iter() {
+  for (entity, transform, mut wave_dir) in water_transforms.iter_mut() {
+    // Apply height easing if height has changed
     if transform.translation.y != settings.height {
       let target_transform = Transform::from_xyz(
         transform.translation.x,
@@ -235,6 +364,10 @@ pub fn update_water_height(
         easing_settings.height_easing_type,
       ));
     }
+
+    // Update wave direction target and duration
+    wave_dir.set_target(settings.wave_direction);
+    wave_dir.set_duration(settings.wave_direction_blend_duration);
   }
 }
 
@@ -243,7 +376,6 @@ pub fn update_materials(
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {
   if !settings.update_materials {
-    // Don't update water materials.
     return;
   }
   for (_, mat) in materials.iter_mut() {
@@ -256,6 +388,31 @@ pub fn update_materials(
     mat.extension.edge_color = settings.edge_color;
     mat.extension.edge_scale = settings.edge_scale;
     mat.extension.quality = settings.water_quality.into();
+  }
+}
+
+/// Update wave direction spring simulation each frame.
+pub fn update_wave_direction(
+  time: Res<Time>,
+  mut water_tiles: Query<&mut WaveDirection, With<WaterTile>>,
+) {
+  let dt = time.delta_secs();
+  for mut wave_dir in water_tiles.iter_mut() {
+    wave_dir.update(dt);
+  }
+}
+
+/// Apply wave direction blend state to materials when the component changes.
+pub fn apply_wave_direction(
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
+  water_tiles: Query<(&MeshMaterial3d<StandardWaterMaterial>, &WaveDirection), Changed<WaveDirection>>,
+) {
+  for (material_handle, wave_dir) in water_tiles.iter() {
+    if let Some(mat) = materials.get_mut(&material_handle.0) {
+      mat.extension.wave_dir_a = wave_dir.dir_a();
+      mat.extension.wave_dir_b = wave_dir.dir_b();
+      mat.extension.wave_blend = wave_dir.effective_blend();
+    }
   }
 }
 

@@ -4,13 +4,12 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
-use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+#[cfg(feature = "debug")]
+use bevy::color::palettes::css::*;
 use bevy::mesh::*;
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{
-  app::AppExit,
-  light::light_consts::lux,
-  anti_alias::taa::TemporalAntiAliasing,
-  prelude::*,
+  anti_alias::taa::TemporalAntiAliasing, app::AppExit, light::light_consts::lux, prelude::*,
   render::render_resource::TextureFormat,
 };
 #[cfg(feature = "atmosphere")]
@@ -22,9 +21,6 @@ use bevy_atmosphere::prelude::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 #[cfg(feature = "spectator")]
 use bevy_spectator::*;
-
-#[cfg(feature = "debug")]
-use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
 
@@ -53,11 +49,11 @@ pub fn pirates_app(title: &str) -> App {
         .set(AssetPlugin::default()),
     );
 
-  #[cfg(feature = "debug")]
-  app.add_plugins(DebugLinesPlugin::with_depth_test(true));
-
   #[cfg(feature = "inspector")]
-  app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
+  app.add_plugins((
+    bevy_inspector_egui::bevy_egui::EguiPlugin::default(),
+    bevy_inspector_egui::quick::WorldInspectorPlugin::new(),
+  ));
 
   // Simple movement for this example
   #[cfg(feature = "spectator")]
@@ -100,8 +96,7 @@ pub fn pirates_app(title: &str) -> App {
     .add_systems(Update, daylight_cycle);
 
   #[cfg(not(feature = "atmosphere"))]
-  app
-    .add_systems(Update, dynamic_sun);
+  app.add_systems(Update, dynamic_sun);
 
   app
 }
@@ -285,7 +280,7 @@ impl Ship {
     water: &WaterParam,
     pos: Vec3,
     transform: &mut Transform,
-    #[cfg(feature = "debug")] lines: &mut DebugLines,
+    #[cfg(feature = "debug")] gizmos: &mut Gizmos,
   ) {
     let (yaw, _pitch, _roll) = transform.rotation.to_euler(EulerRot::YXZ);
     let global = Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(yaw));
@@ -299,11 +294,11 @@ impl Ship {
     // Debug lines.
     #[cfg(feature = "debug")]
     {
-      lines.line(front, front + normal, 0.0);
-      lines.line_colored(front, right, 0.0, Color::RED);
-      lines.line(right, left, 0.0);
-      lines.line_colored(left, front, 0.0, Color::GREEN);
-      lines.line(transform.translation, transform.translation + normal, 0.0);
+      gizmos.line(front, front + normal, WHITE);
+      gizmos.line(front, right, RED);
+      gizmos.line(right, left, WHITE);
+      gizmos.line(left, front, GREEN);
+      gizmos.line(transform.translation, transform.translation + normal, WHITE);
     }
 
     front.y += self.water_line - 0.2;
@@ -316,14 +311,14 @@ impl Ship {
 pub fn update_ships(
   water: WaterParam,
   mut ships: Query<(&Ship, &mut Transform, &GlobalTransform)>,
-  #[cfg(feature = "debug")] mut lines: ResMut<DebugLines>,
+  #[cfg(feature = "debug")] mut gizmos: Gizmos,
 ) {
   for (ship, mut transform, global) in ships.iter_mut() {
     let pos = global.translation();
     #[cfg(not(feature = "debug"))]
     ship.update(&water, pos, &mut transform);
     #[cfg(feature = "debug")]
-    ship.update(&water, pos, &mut transform, &mut lines);
+    ship.update(&water, pos, &mut transform, &mut gizmos);
   }
 }
 
@@ -484,8 +479,9 @@ pub fn make_camera<'a>(
       ..default()
     },
     */
-    Msaa::Off, TemporalAntiAliasing::default(),
-      //*
+    Msaa::Off,
+    TemporalAntiAliasing::default(),
+    //*
     DistanceFog {
       color: Color::srgba(0.1, 0.2, 0.4, 1.0),
       //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
@@ -497,7 +493,7 @@ pub fn make_camera<'a>(
       ),
       ..default()
     },
-      //*/
+    //*/
   ));
 
   #[cfg(feature = "spectator")]
@@ -518,27 +514,25 @@ pub fn make_camera<'a>(
   #[cfg(not(feature = "atmosphere"))]
   {
     use bevy::{
-      core_pipeline::tonemapping::Tonemapping,
-      post_process::bloom::Bloom,
-      pbr::{Atmosphere, AtmosphereSettings},
-      render::view::Hdr,
       camera::Exposure,
+      core_pipeline::tonemapping::Tonemapping,
+      pbr::{Atmosphere, AtmosphereSettings},
+      post_process::bloom::Bloom,
+      render::view::Hdr,
     };
     cam.insert((
-    Camera {
-      ..default()
-    },
-    Hdr,
-    Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
-    Atmosphere::EARTH,
-    AtmosphereSettings {
-      aerial_view_lut_max_distance: 3.2e5,
-      scene_units_to_m: 1e+4,
-      ..default()
-    },
-    Exposure::SUNLIGHT,
-    Tonemapping::AcesFitted,
-    Bloom::NATURAL,
+      Camera { ..default() },
+      Hdr,
+      Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
+      Atmosphere::EARTH,
+      AtmosphereSettings {
+        aerial_view_lut_max_distance: 3.2e5,
+        scene_units_to_m: 1e+4,
+        ..default()
+      },
+      Exposure::SUNLIGHT,
+      Tonemapping::AcesFitted,
+      Bloom::NATURAL,
     ));
   }
 

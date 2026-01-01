@@ -41,7 +41,7 @@ fn get_wave_height(p: vec2<f32>) -> f32 {
   d = d + wave((p + time) * 0.5) * 0.2;
 #else
 #ifdef QUALITY_4
-  d = d + wave((p + time) * 0.6) * 0.2;
+  d = d + wave((p - time) * 0.6) * 0.2;
 #endif
 #endif
 #endif

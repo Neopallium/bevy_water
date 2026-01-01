@@ -2,8 +2,7 @@
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
 #[cfg(feature = "debug")]
-use bevy_prototype_debug_lines::DebugLines;
-
+use bevy::color::palettes::css::*;
 use bevy::prelude::*;
 
 mod pirates;
@@ -31,7 +30,7 @@ fn debug_water_wave_grid(
   )>,
   meshes: Res<Assets<Mesh>>,
   materials: Res<Assets<StandardWaterMaterial>>,
-  mut lines: ResMut<DebugLines>,
+  mut gizmos: Gizmos,
 ) {
   for (mesh, tile, global) in tiles.iter() {
     let mesh = meshes.get(mesh);

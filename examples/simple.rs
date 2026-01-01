@@ -3,25 +3,54 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
-use bevy::prelude::*;
+use bevy::{input::common_conditions, prelude::*};
 
 use bevy_water::*;
+
+#[cfg(feature = "easings")]
+use bevy_easings::{EaseMethod, EasingType};
 
 const WATER_HEIGHT: f32 = 20.0;
 
 fn main() {
   let mut app = App::new();
 
-  app
+  let app = app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
       ..default()
-    })
+    });
+
+  #[cfg(feature = "easings")]
+  {
+    app.insert_resource(WaterHeightEasingSettings {
+      height_easing_all_tiles: true,
+      height_easing_method: EaseMethod::Linear,
+      height_easing_type: EasingType::Once {
+        duration: std::time::Duration::from_secs(5),
+      },
+    });
+  }
+
+  app
     .add_plugins(WaterPlugin)
-    .add_systems(Startup, setup);
+    .add_systems(Startup, setup)
+    .add_systems(
+      Update,
+      toggle_wave_height.run_if(common_conditions::input_just_pressed(KeyCode::KeyH)),
+    );
 
   app.run();
+}
+
+// Toggle wave height between two values.
+fn toggle_wave_height(mut settings: ResMut<WaterSettings>) {
+  if settings.height == WATER_HEIGHT {
+    settings.height = WATER_HEIGHT + 5.0;
+  } else {
+    settings.height = WATER_HEIGHT;
+  }
 }
 
 /// set up a simple 3D scene

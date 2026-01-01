@@ -18,7 +18,10 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
+default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils", "easings"]
+
+# Enable Bevy Easings support.
+easings = ["bevy_easings"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []
@@ -57,7 +60,6 @@ webgpu = ["bevy/webgpu"]
 
 [dependencies]
 anyhow = "1.0"
-derive_more = { version = "1.0", features = ["debug"] }
 
 bevy = { version = "0.17.0", default-features = false, features = [
   "bevy_asset",
@@ -65,7 +67,7 @@ bevy = { version = "0.17.0", default-features = false, features = [
   "bevy_pbr",
   "bevy_log",
 ] }
-bevy_easings = "0.17.1"
+bevy_easings = { version = "0.17.1", optional = true }
 
 [dev-dependencies]
 bevy = { version = "0.17.0", features = [

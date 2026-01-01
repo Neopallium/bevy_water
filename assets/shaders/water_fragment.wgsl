@@ -111,7 +111,8 @@ fn fragment(
   out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
   // show grid
-  //let f_pos = step(fract((w_pos / 10.06274)), vec2<f32>(0.995));
+  // 3.938... = WATER_SIZE / ((WATER_SIZE / 4) + 1)
+  //let f_pos = step(fract((w_pos / 3.9384615384615)), vec2<f32>(0.995));
   //let grid = step(f_pos.x + f_pos.y, 1.00);
   //out.color += vec4<f32>(grid, grid, grid, 0.00);
 #endif

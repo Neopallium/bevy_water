@@ -1,13 +1,11 @@
 use bevy::{
   asset::{load_internal_asset, uuid_handle},
+  mesh::MeshVertexBufferLayoutRef,
   pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline},
   prelude::*,
-  shader::*,
   reflect::{std_traits::ReflectDefault, Reflect},
-  render::{
-    render_asset::*, render_resource::*, texture::GpuImage,
-  },
-  mesh::MeshVertexBufferLayoutRef,
+  render::{render_asset::*, render_resource::*, texture::GpuImage},
+  shader::*,
 };
 
 pub type StandardWaterMaterial = ExtendedMaterial<StandardMaterial, WaterMaterial>;
@@ -108,17 +106,23 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
 
 pub const NOISE_FBM_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-78e6-9e95-669f43d631f4");
 
-pub const NOISE_RANDOM_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-76a1-a5eb-5eec34b09b99");
+pub const NOISE_RANDOM_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-76a1-a5eb-5eec34b09b99");
 
-pub const NOISE_VNOISE_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-7000-b5eb-93ec377e4060");
+pub const NOISE_VNOISE_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-7000-b5eb-93ec377e4060");
 
-pub const WATER_BINDINGS_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-7024-a6dc-1d4843336463");
+pub const WATER_BINDINGS_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-7024-a6dc-1d4843336463");
 
-pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-7a6e-b944-022ae6bb4fa9");
+pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-7a6e-b944-022ae6bb4fa9");
 
-pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-73a2-9223-08d5fedf602c");
+pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-73a2-9223-08d5fedf602c");
 
-pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-756e-9dc8-ccf5afaf5bb0");
+pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> =
+  uuid_handle!("01968d7d-6cec-756e-9dc8-ccf5afaf5bb0");
 
 #[cfg(feature = "embed_shaders")]
 fn water_fragment_shader() -> ShaderRef {
@@ -167,16 +171,17 @@ impl MaterialExtension for WaterMaterial {
     _layout: &MeshVertexBufferLayoutRef,
     key: MaterialExtensionKey<Self>,
   ) -> Result<(), SpecializedMeshPipelineError> {
-    let dyn_water = key.bind_group_data.quality > 2;
+    let high_quality = key.bind_group_data.quality > 2;
     if let Some(fragment) = descriptor.fragment.as_mut() {
       fragment
         .shader_defs
         .push(format!("QUALITY_{}", key.bind_group_data.quality).into());
-      if dyn_water {
+      if high_quality {
         fragment.shader_defs.push("DYN_WATER".into());
+        fragment.shader_defs.push("BLEND_WAVE_DIRECTION".into());
       }
     }
-    if dyn_water {
+    if high_quality {
       descriptor.vertex.shader_defs.push("DYN_WATER".into());
     }
     Ok(())

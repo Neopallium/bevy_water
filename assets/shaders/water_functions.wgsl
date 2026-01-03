@@ -61,16 +61,20 @@ fn sample_directional_wave(p: vec2<f32>, time: f32, dir: vec2<f32>) -> f32 {
 fn get_wave_height(p: vec2<f32>) -> f32 {
   let time = globals.time / 2.0;
 
-  // Sample both wave directions independently
+#ifdef BLEND_WAVE_DIRECTION
+  // Sample both wave directions independently (higher quality)
   let wave_a = sample_directional_wave(p, time, material.wave_dir_a);
   let wave_b = sample_directional_wave(p, time, material.wave_dir_b);
 
   // Asymmetric smoothstep - old waves fade out faster than new waves fade in
-  // This mimics how energy dissipates faster than it builds, looking more natural
   let blend = smoothstep(0.0, 0.85, material.wave_blend);
 
   // Blend wave patterns - NOT rotating, just fading between independent patterns
   let d = mix(wave_a, wave_b, blend);
+#else
+  // Single direction sampling (lower quality, better performance)
+  let d = sample_directional_wave(p, time, material.wave_dir_a);
+#endif
 
   return material.amplitude * d;
 }

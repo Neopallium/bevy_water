@@ -91,10 +91,7 @@ fn sample_directional_wave(p: Vec2, time: f32, g_time: f32, wave_direction: Vec2
   let dir = wave_direction.normalize_or_zero();
   // Rotate coordinates so wave ridges are perpendicular to travel direction
   // Negate x-component so waves travel along dir, not against it
-  let rotated_p = Vec2::new(
-    -(p.x * dir.x + p.y * dir.y),
-    p.y * dir.x - p.x * dir.y
-  );
+  let rotated_p = Vec2::new(-(p.x * dir.x + p.y * dir.y), p.y * dir.x - p.x * dir.y);
 
   // Multiple layers with counter-directional scrolling for volume
   let time_vec = Vec2::splat(time);
@@ -110,6 +107,24 @@ pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2, wave_direction: Vec2) -> 
   sample_directional_wave(p, time, g_time, wave_direction)
 }
 
+/// Sample wave with dual-direction crossfade blending (matches High/Ultra shader quality).
+pub fn sample_directional_wave_blended(
+  g_time: f32,
+  p: Vec2,
+  dir_a: Vec2,
+  dir_b: Vec2,
+  blend: f32,
+) -> f32 {
+  let time = g_time / 2.0;
+  let wave_a = sample_directional_wave(p, time, g_time, dir_a);
+  let wave_b = sample_directional_wave(p, time, g_time, dir_b);
+
+  // Asymmetric smoothstep - matches shader behavior
+  let blend_smooth = smoothstep(0.0, 0.85, blend);
+
+  mix(wave_a, wave_b, blend_smooth)
+}
+
 /// Calculate wave height at global position `pos`.
 ///
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.
@@ -117,7 +132,13 @@ pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2, wave_direction: Vec2) -> 
 /// `amplitude` - The amplitude of the wave.
 /// `wave_direction` - The wave movement direction.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_height(time: f32, base_height: f32, amplitude: f32, wave_direction: Vec2, pos: Vec3) -> f32 {
+pub fn get_wave_height(
+  time: f32,
+  base_height: f32,
+  amplitude: f32,
+  wave_direction: Vec2,
+  pos: Vec3,
+) -> f32 {
   get_wave_height_2d(time, Vec2::new(pos.x, pos.z), wave_direction) * amplitude + base_height
 }
 
@@ -129,7 +150,13 @@ pub fn get_wave_height(time: f32, base_height: f32, amplitude: f32, wave_directi
 /// `amplitude` - The amplitude of the wave.
 /// `wave_direction` - The wave movement direction.
 /// `pos` - Global world position.  Use your entity's `GlobalTransform` to get the world position.
-pub fn get_wave_point(time: f32, base_height: f32, amplitude: f32, wave_direction: Vec2, mut pos: Vec3) -> Vec3 {
+pub fn get_wave_point(
+  time: f32,
+  base_height: f32,
+  amplitude: f32,
+  wave_direction: Vec2,
+  mut pos: Vec3,
+) -> Vec3 {
   pos.y = get_wave_height(time, base_height, amplitude, wave_direction, pos);
   pos
 }

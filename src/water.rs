@@ -7,7 +7,7 @@ pub use bevy_easings::{Ease, EaseFunction, EaseMethod, EasingType, EasingsPlugin
 pub mod material;
 use material::*;
 
-use crate::sample_directional_wave_blended;
+use crate::{mix2d, sample_directional_wave_blended, smoothstep};
 
 /// Component for tracking wave direction using dual-direction crossfade blending.
 ///
@@ -108,7 +108,8 @@ impl WaveDirection {
 
   /// Get the current blended direction (for physics/CPU calculations).
   pub fn current_blended(&self) -> Vec2 {
-    self.dir_a.lerp(self.dir_b, self.blend).normalize_or_zero()
+    let blend = smoothstep(0.0, 0.85, self.blend);
+    mix2d(self.dir_a, self.dir_b, blend).normalize_or_zero()
   }
 
   /// Get the effective blended direction with tile offset applied (for GPU/shader).

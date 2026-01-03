@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.17.2"
+version = "0.18.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -18,7 +18,7 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils", "easings"]
+default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
 
 # Enable Bevy Easings support.
 easings = ["bevy_easings"]
@@ -30,7 +30,7 @@ embed_shaders = []
 file_watcher = ["bevy/file_watcher", "bevy/embedded_watcher"]
 
 # Enable inspector in examples.
-inspector = []
+inspector = [ "bevy-inspector-egui" ]
 
 # Enable debug lines in examples.
 debug = []
@@ -59,45 +59,13 @@ webgl2 = ["bevy/webgl2"]
 webgpu = ["bevy/webgpu"]
 
 [dependencies]
-anyhow = "1.0"
-
-bevy = { version = "0.17.0", default-features = false, features = [
+bevy = { version = "0.18.0", default-features = false, features = [
   "bevy_asset",
   "bevy_render",
   "bevy_pbr",
-  "bevy_log",
 ] }
 bevy_easings = { version = "0.17.1", optional = true }
+bevy-inspector-egui = { version = "0.36", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.17.0", features = [
-  "animation",
-  "bevy_asset",
-  "bevy_audio",
-  "bevy_gilrs",
-  "bevy_scene",
-  "bevy_winit",
-  "bevy_core_pipeline",
-  "bevy_pbr",
-  "bevy_gltf",
-  "bevy_render",
-  "bevy_sprite",
-  "bevy_text",
-  "bevy_ui",
-  "bevy_log",
-  "png",
-  "jpeg",
-  "hdr",
-  "ktx2",
-  "vorbis",
-  "x11",
-  "bevy_gizmos",
-  "android_shared_stdcxx",
-  "tonemapping_luts",
-  "default_font",
-] }
-bevy-inspector-egui = { version = "0.34" }
-##bevy_atmosphere = { version = "0.13" }
-##bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
-#bevy_spectator = { version = "0.8" }
-bevy_panorbit_camera = { version = "0.29", features = ["bevy_egui"] }
+bevy = { version = "0.18.0", features = [ "3d" ] }

@@ -149,18 +149,11 @@ impl MaterialExtension for WaterMaterial {
     _layout: &MeshVertexBufferLayoutRef,
     key: MaterialExtensionKey<Self>,
   ) -> Result<(), SpecializedMeshPipelineError> {
-    let dyn_water = key.bind_group_data.quality > 2;
+    let quality = ShaderDefVal::UInt(String::from("QUALITY"), key.bind_group_data.quality);
     if let Some(fragment) = descriptor.fragment.as_mut() {
-      fragment
-        .shader_defs
-        .push(format!("QUALITY_{}", key.bind_group_data.quality).into());
-      if dyn_water {
-        fragment.shader_defs.push("DYN_WATER".into());
+      fragment.shader_defs.push(quality.clone());
       }
-    }
-    if dyn_water {
-      descriptor.vertex.shader_defs.push("DYN_WATER".into());
-    }
+    descriptor.vertex.shader_defs.push(quality);
     Ok(())
   }
 }

@@ -38,7 +38,7 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 
   // Add the wave height to the world position.
 	var height = -0.5;
-#ifdef DYN_WATER
+#if QUALITY > 2
   let w_pos = water_fn::uv_to_coord(vertex.uv);
   height = water_fn::get_wave_height(w_pos);
 #endif

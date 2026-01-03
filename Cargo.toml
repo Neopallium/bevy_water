@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.17.1"
+version = "0.18.0-rc.2"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -18,7 +18,7 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils", "easings"]
+default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
 
 # Enable Bevy Easings support.
 easings = ["bevy_easings"]
@@ -59,9 +59,7 @@ webgl2 = ["bevy/webgl2"]
 webgpu = ["bevy/webgpu"]
 
 [dependencies]
-anyhow = "1.0"
-
-bevy = { version = "0.17.0", default-features = false, features = [
+bevy = { version = "0.18.0-rc.2", default-features = false, features = [
   "bevy_asset",
   "bevy_render",
   "bevy_pbr",
@@ -70,8 +68,7 @@ bevy = { version = "0.17.0", default-features = false, features = [
 bevy_easings = { version = "0.17.1", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.17.0", features = [
-  "animation",
+bevy = { version = "0.18.0-rc.2", features = [
   "bevy_asset",
   "bevy_audio",
   "bevy_gilrs",
@@ -96,8 +93,7 @@ bevy = { version = "0.17.0", features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.34" }
+#bevy-inspector-egui = { version = "0.34" }
 ##bevy_atmosphere = { version = "0.13" }
-##bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 #bevy_spectator = { version = "0.8" }
-bevy_panorbit_camera = { version = "0.29", features = ["bevy_egui"] }
+#bevy_panorbit_camera = { version = "0.29", features = ["bevy_egui"] }

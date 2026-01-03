@@ -75,7 +75,7 @@ fn reformat_image(
   query: Query<(Entity, &ImageReformat)>,
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
-) {
+) -> Result {
   for (entity, reformat) in &query {
     if let Some(image) = images.get_mut(&reformat.image) {
       match &reformat.action {
@@ -88,7 +88,7 @@ fn reformat_image(
             info!("Reinterpret 2D image {}", reformat.name);
             image.reinterpret_stacked_2d_as_array(
               image.texture_descriptor.size.height / image.texture_descriptor.size.width,
-            );
+            )?;
             image.texture_view_descriptor = Some(TextureViewDescriptor {
               dimension: Some(TextureViewDimension::Cube),
               ..default()
@@ -103,6 +103,8 @@ fn reformat_image(
       commands.entity(entity).despawn();
     }
   }
+
+  Ok(())
 }
 
 #[derive(Default, Clone, Debug)]

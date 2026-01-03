@@ -19,16 +19,10 @@ fn wave(p: vec2<f32>) -> f32 {
   let wave_len_y = 2.0;
   let wave_x = cos(p.x / wave_len_x + time_x);
   let wave_y = smoothstep(1.0, 0.0, abs(sin(p.y / wave_len_y + wave_x + time_y)));
-#if QUALITY == 1
+#if QUALITY < 3
   let n = noise::fbm::fbm_half(p) / 2.0 - 1.0;
 #else
-#if QUALITY == 2
-  let n = noise::fbm::fbm_half(p) / 2.0 - 1.0;
-#else
-#if QUALITY >= 3
   let n = noise::fbm::fbm(p) / 2.0 - 1.0;
-#endif
-#endif
 #endif
   return wave_y + n;
 }

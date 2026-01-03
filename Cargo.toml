@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.15.3"
+version = "0.15.4"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -95,4 +95,4 @@ bevy-inspector-egui = { version = "0.28" }
 bevy_atmosphere = { version = "0.12" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 bevy_spectator = { version = "0.7" }
-bevy_panorbit_camera = { version = "0.20", features = ["bevy_egui"] }
+bevy_panorbit_camera = { version = "0.25", features = ["bevy_egui"] }

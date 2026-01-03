@@ -1,39 +1,47 @@
 use bevy::prelude::*;
 
 // wgsl compatible `fract`.
-fn fract(x: f32) -> f32 {
+pub(crate) fn fract(x: f32) -> f32 {
   x - x.floor()
 }
-fn fract_vec2(v: Vec2) -> Vec2 {
+
+pub(crate) fn fract_vec2(v: Vec2) -> Vec2 {
   Vec2 {
     x: fract(v.x),
     y: fract(v.y),
   }
 }
 
-fn mix(x: f32, y: f32, a: f32) -> f32 {
+pub(crate) fn mix(x: f32, y: f32, a: f32) -> f32 {
   x * (1.0 - a) + y * a
 }
 
-fn random2d(v: Vec2) -> f32 {
+pub(crate) fn mix2d(x: Vec2, y: Vec2, a: f32) -> Vec2 {
+  Vec2 {
+    x: mix(x.x, y.x, a),
+    y: mix(x.y, y.y, a),
+  }
+}
+
+pub(crate) fn random2d(v: Vec2) -> f32 {
   // Note: the large values here seem to cause some precision differences between the shader
   // and this Rust code.
   return fract(v.dot(Vec2::new(12.9898, 78.233)).sin() * 43758.5453123);
 }
 
 // Sometimes needed for noise functions that sample multiple corners.
-fn random2di(v: Vec2) -> f32 {
+pub(crate) fn random2di(v: Vec2) -> f32 {
   return random2d(v.floor());
 }
 
-fn cubic_hermite_curve_2d(p: Vec2) -> Vec2 {
+pub(crate) fn cubic_hermite_curve_2d(p: Vec2) -> Vec2 {
   return Vec2 {
     x: smoothstep(0.0, 1.0, p.x),
     y: smoothstep(0.0, 1.0, p.y),
   };
 }
 
-fn vnoise2d(v: Vec2) -> f32 {
+pub(crate) fn vnoise2d(v: Vec2) -> f32 {
   let i = v.floor();
   let f = fract_vec2(v);
 
@@ -50,12 +58,12 @@ fn vnoise2d(v: Vec2) -> f32 {
   return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
-fn noise2(v: Vec2) -> f32 {
+pub(crate) fn noise2(v: Vec2) -> f32 {
   return vnoise2d(v);
 }
 
 const M2: Mat2 = Mat2::from_cols(Vec2::new(0.8, 0.6), Vec2::new(-0.6, 0.8));
-fn fbm(mut p: Vec2) -> f32 {
+pub(crate) fn fbm(mut p: Vec2) -> f32 {
   let mut f = 0.5000 * noise2(p);
   p = M2 * p * 2.02;
   f = f + 0.2500 * noise2(p);
@@ -66,19 +74,19 @@ fn fbm(mut p: Vec2) -> f32 {
   return f / 0.9375;
 }
 
-fn fbm_half(mut p: Vec2) -> f32 {
+pub(crate) fn fbm_half(mut p: Vec2) -> f32 {
   let mut f = 0.5000 * noise2(p);
   p = M2 * p * 2.02;
   f = f + 0.2500 * noise2(p);
   return f / 0.9375;
 }
 
-fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
+pub(crate) fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
   let t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
   t * t * (3.0 - 2.0 * t)
 }
 
-fn wave(p: Vec2, g_time: f32, quality: u32) -> f32 {
+pub(crate) fn wave(p: Vec2, g_time: f32, quality: u32) -> f32 {
   // Internal time creates fluid oscillation within the pattern
   let time = g_time * 0.5 + 23.0;
   let time_x = time / 1.0;
@@ -97,7 +105,7 @@ fn wave(p: Vec2, g_time: f32, quality: u32) -> f32 {
 }
 
 /// Sample wave pattern for a single direction.
-fn sample_directional_wave(
+pub(crate) fn sample_directional_wave(
   p: Vec2,
   time: f32,
   g_time: f32,

@@ -44,7 +44,7 @@ fn fragment(
   let w_pos = water_fn::uv_to_coord(in.uv);
   // Calculate normal.
   let height = water_fn::get_wave_height(w_pos);
-#ifdef DYN_WATER
+#if QUALITY > 2
   let delta = 0.5;
   let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
   let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));

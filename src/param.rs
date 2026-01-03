@@ -1,12 +1,16 @@
 use bevy::{ecs::system::SystemParam, math::Vec3Swizzles, prelude::*};
 
-use crate::{water::WaterSettings, wave::get_wave_height_2d};
+use crate::{
+  water::{GlobalWaveState, WaterQuality, WaterSettings},
+  wave::{get_wave_height_2d, sample_directional_wave_blended},
+};
 
 /// A system parameter used to calculate wave height and point based on global WaterSettings and Time resources.
 #[derive(SystemParam)]
 pub struct WaterParam<'w> {
   pub settings: Res<'w, WaterSettings>,
   pub time: Res<'w, Time>,
+  pub wave_state: Res<'w, GlobalWaveState>,
 }
 
 impl<'w> WaterParam<'w> {
@@ -21,14 +25,30 @@ impl<'w> WaterParam<'w> {
   /// The height of the waves at the given global position.
   pub fn wave_height(&self, position: Vec3) -> f32 {
     let time = self.time.elapsed_secs_wrapped();
-    self.settings.height
-      + self.settings.amplitude
-        * get_wave_height_2d(
+    let p = position.xz();
+
+    // Use dual-sample crossfade for High/Ultra quality (matches shader behavior)
+    let wave = match self.settings.water_quality {
+      WaterQuality::High | WaterQuality::Ultra => sample_directional_wave_blended(
+        time,
+        p,
+        self.wave_state.dir_a,
+        self.wave_state.dir_b,
+        self.wave_state.blend,
+        self.settings.water_quality.into(),
+      ),
+      _ => {
+        // Basic/Medium: use dir_a only (matches shader behavior)
+        get_wave_height_2d(
           time,
-          position.xz(),
-          self.settings.wave_direction,
+          p,
+          self.wave_state.dir_a,
           self.settings.water_quality.into(),
         )
+      }
+    };
+
+    self.settings.height + self.settings.amplitude * wave
   }
 
   /// Calculates the point of the waves at the given position.

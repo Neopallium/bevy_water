@@ -7,6 +7,8 @@ pub use bevy_easings::{Ease, EaseFunction, EaseMethod, EasingType, EasingsPlugin
 pub mod material;
 use material::*;
 
+use crate::sample_directional_wave_blended;
+
 /// Component for tracking wave direction using dual-direction crossfade blending.
 ///
 /// Instead of rotating waves (which looks unnatural), this crossfades between
@@ -109,6 +111,14 @@ impl WaveDirection {
     self.dir_a.lerp(self.dir_b, self.blend).normalize_or_zero()
   }
 
+  /// Get the effective blended direction with tile offset applied (for GPU/shader).
+  pub fn effective_direction(&self) -> Vec2 {
+    self
+      .dir_a
+      .lerp(self.dir_b, self.effective_blend())
+      .normalize_or_zero()
+  }
+
   /// Check if the blend is complete.
   pub fn is_settled(&self) -> bool {
     self.blend >= 1.0
@@ -118,6 +128,42 @@ impl WaveDirection {
 pub const WATER_SIZE: u32 = 256;
 pub const WATER_HALF_SIZE: f32 = WATER_SIZE as f32 / 2.0;
 pub const WATER_GRID_SIZE: u32 = 6;
+
+/// Global wave transition state for physics calculations.
+/// This mirrors the shader's wave direction blending state.
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct GlobalWaveState {
+  /// Direction A (fading out).
+  pub dir_a: Vec2,
+  /// Direction B (fading in).
+  pub dir_b: Vec2,
+  /// Blend factor: 0 = fully A, 1 = fully B.
+  pub blend: f32,
+}
+
+impl Default for GlobalWaveState {
+  fn default() -> Self {
+    let default_dir = Vec2::new(1.0, 2.0).normalize();
+    Self {
+      dir_a: default_dir,
+      dir_b: default_dir,
+      blend: 1.0,
+    }
+  }
+}
+
+impl GlobalWaveState {
+  /// Get the blended wave height using dual-sample crossfade (matches High/Ultra shader).
+  pub fn blended_height(&self, time: f32, p: Vec2, amplitude: f32) -> f32 {
+    sample_directional_wave_blended(time, p, self.dir_a, self.dir_b, self.blend, u32::MAX)
+      * amplitude
+  }
+
+  /// Get the current blended direction.
+  pub fn current_direction(&self) -> Vec2 {
+    self.dir_a.lerp(self.dir_b, self.blend).normalize_or_zero()
+  }
+}
 
 #[derive(Debug, Clone, Copy, Reflect)]
 #[repr(u32)]
@@ -287,7 +333,8 @@ pub fn setup_water(
           let coord_offset = Vec2::new(x, y);
           // Water material.
           // Per-tile offset for desynchronized transitions (based on tile position)
-          let tile_hash = ((x as i32).wrapping_mul(73856093) ^ (y as i32).wrapping_mul(19349663)) as f32;
+          let tile_hash =
+            ((x as i32).wrapping_mul(73856093) ^ (y as i32).wrapping_mul(19349663)) as f32;
           let tile_offset = (tile_hash.abs() % 1000.0) / 1000.0 * 0.3; // 0-0.3 range
 
           let normalized_dir = settings.wave_direction.normalize_or_zero();
@@ -347,9 +394,9 @@ pub fn update_water_height(
   mut commands: Commands,
   settings: Res<WaterSettings>,
   easing_settings: Res<WaterHeightEasingSettings>,
-  mut water_transforms: Query<(Entity, &Transform, &mut WaveDirection), With<WaterTile>>,
+  water_transforms: Query<(Entity, &Transform), With<WaterTile>>,
 ) {
-  for (entity, transform, mut wave_dir) in water_transforms.iter_mut() {
+  for (entity, transform) in water_transforms.iter() {
     // Apply height easing if height has changed
     if transform.translation.y != settings.height {
       let target_transform = Transform::from_xyz(
@@ -364,10 +411,6 @@ pub fn update_water_height(
         easing_settings.height_easing_type,
       ));
     }
-
-    // Update wave direction target and duration
-    wave_dir.set_target(settings.wave_direction);
-    wave_dir.set_duration(settings.wave_direction_blend_duration);
   }
 }
 
@@ -391,6 +434,30 @@ pub fn update_materials(
   }
 }
 
+/// Sync wave direction from WaterSettings to WaveDirection components.
+pub fn sync_wave_direction_settings(
+  settings: Res<WaterSettings>,
+  mut water_tiles: Query<&mut WaveDirection, With<WaterTile>>,
+) {
+  for mut wave_dir in water_tiles.iter_mut() {
+    wave_dir.set_target(settings.wave_direction);
+    wave_dir.set_duration(settings.wave_direction_blend_duration);
+  }
+}
+
+/// Update global wave state from the first tile's WaveDirection (for physics).
+pub fn update_global_wave_state(
+  mut global_state: ResMut<GlobalWaveState>,
+  water_tiles: Query<&WaveDirection, With<WaterTile>>,
+) {
+  // Use the first tile's state (without tile_offset) as the global state
+  if let Some(wave_dir) = water_tiles.iter().next() {
+    global_state.dir_a = wave_dir.dir_a();
+    global_state.dir_b = wave_dir.dir_b();
+    global_state.blend = wave_dir.blend();
+  }
+}
+
 /// Update wave direction spring simulation each frame.
 pub fn update_wave_direction(
   time: Res<Time>,
@@ -402,16 +469,16 @@ pub fn update_wave_direction(
   }
 }
 
-/// Apply wave direction blend state to materials when the component changes.
+/// Apply wave direction to materials each frame.
 pub fn apply_wave_direction(
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
-  water_tiles: Query<(&MeshMaterial3d<StandardWaterMaterial>, &WaveDirection), Changed<WaveDirection>>,
+  water_tiles: Query<(&MeshMaterial3d<StandardWaterMaterial>, &WaveDirection)>,
 ) {
   for (material_handle, wave_dir) in water_tiles.iter() {
     if let Some(mat) = materials.get_mut(&material_handle.0) {
       mat.extension.wave_dir_a = wave_dir.dir_a();
       mat.extension.wave_dir_b = wave_dir.dir_b();
-      mat.extension.wave_blend = wave_dir.effective_blend();
+      mat.extension.wave_blend = wave_dir.blend();
     }
   }
 }
@@ -423,6 +490,7 @@ impl Plugin for WaterPlugin {
   fn build(&self, app: &mut App) {
     let app = app
       .init_resource::<WaterSettings>()
+      .init_resource::<GlobalWaveState>()
       .register_type::<WaterSettings>()
       .add_plugins(WaterMaterialPlugin)
       .add_systems(Startup, setup_water);
@@ -440,7 +508,14 @@ impl Plugin for WaterPlugin {
 
     app.add_systems(
       Update,
-      update_materials.run_if(resource_changed::<WaterSettings>),
+      (
+        update_materials.run_if(resource_changed::<WaterSettings>),
+        sync_wave_direction_settings.run_if(resource_changed::<WaterSettings>),
+        update_wave_direction,
+        update_global_wave_state,
+        apply_wave_direction,
+      )
+        .chain(),
     );
   }
 }

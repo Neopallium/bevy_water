@@ -129,6 +129,25 @@ pub(crate) fn get_wave_height_2d(g_time: f32, p: Vec2, wave_direction: Vec2, qua
   sample_directional_wave(p, time, g_time, wave_direction, quality)
 }
 
+/// Sample wave with dual-direction crossfade blending (matches High/Ultra shader quality).
+pub fn sample_directional_wave_blended(
+  g_time: f32,
+  p: Vec2,
+  dir_a: Vec2,
+  dir_b: Vec2,
+  blend: f32,
+  quality: u32,
+) -> f32 {
+  let time = g_time / 2.0;
+  let wave_a = sample_directional_wave(p, time, g_time, dir_a, quality);
+  let wave_b = sample_directional_wave(p, time, g_time, dir_b, quality);
+
+  // Asymmetric smoothstep - matches shader behavior
+  let blend_smooth = smoothstep(0.0, 0.85, blend);
+
+  mix(wave_a, wave_b, blend_smooth)
+}
+
 /// Calculate wave height at global position `pos`.
 ///
 /// `time` - Bevy `time.elapsed_seconds_wrapped()`.

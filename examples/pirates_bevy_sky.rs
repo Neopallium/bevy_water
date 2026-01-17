@@ -4,33 +4,37 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
+use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin};
 #[cfg(feature = "debug")]
 use bevy::color::palettes::css::*;
 use bevy::mesh::*;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::render::view::Hdr;
 use bevy::{
-  anti_alias::taa::TemporalAntiAliasing, app::AppExit, light::light_consts::lux, prelude::*,
+  anti_alias::fxaa::Fxaa,
+  app::AppExit,
+  camera::Exposure,
+  core_pipeline::tonemapping::Tonemapping,
+  input::keyboard::KeyCode,
+  light::{
+    light_consts::lux, AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, FogVolume,
+    VolumetricFog, VolumetricLight,
+  },
+  pbr::{Atmosphere, AtmosphereMode, AtmosphereSettings, ScatteringMedium, ScreenSpaceReflections},
+  post_process::bloom::Bloom,
+  prelude::*,
   render::render_resource::TextureFormat,
 };
-#[cfg(feature = "atmosphere")]
-use bevy::{time::Stopwatch, utils::Duration};
-
-#[cfg(feature = "atmosphere")]
-use bevy_atmosphere::prelude::*;
-#[cfg(feature = "panorbit")]
-use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-#[cfg(feature = "spectator")]
-use bevy_spectator::*;
+use std::f32::consts::PI;
 
 use bevy_water::*;
 
 pub const WATER_HEIGHT: f32 = 1.0;
-#[cfg(feature = "atmosphere")]
-pub const SPEED_MIN: f32 = 0.05;
-#[cfg(feature = "atmosphere")]
-pub const SPEED_DELTA: f32 = 0.01;
-#[cfg(feature = "atmosphere")]
-pub const SPEED_MAX: f32 = 1.0;
+
+#[derive(Resource, Default)]
+struct GameState {
+  paused: bool,
+}
 
 pub fn pirates_app(title: &str) -> App {
   let mut app = App::new();
@@ -47,7 +51,8 @@ pub fn pirates_app(title: &str) -> App {
           ..default()
         })
         .set(AssetPlugin::default()),
-    );
+    )
+    .add_plugins(FreeCameraPlugin);
 
   #[cfg(feature = "inspector")]
   app.add_plugins((
@@ -55,17 +60,11 @@ pub fn pirates_app(title: &str) -> App {
     bevy_inspector_egui::quick::WorldInspectorPlugin::new(),
   ));
 
-  // Simple movement for this example
-  #[cfg(feature = "spectator")]
-  app.add_plugins(SpectatorPlugin);
-
-  // Simple pan/orbit camera.
-  #[cfg(feature = "panorbit")]
-  app.add_plugins(PanOrbitCameraPlugin);
-
-  // Improve shadows.
   app
-    .insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
+    .insert_resource(ClearColor(Color::BLACK))
+    .insert_resource(GameState::default())
+    .insert_resource(GlobalAmbientLight::NONE)
+    //.insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
       height: WATER_HEIGHT,
@@ -76,35 +75,75 @@ pub fn pirates_app(title: &str) -> App {
     .add_plugins((WaterPlugin, ImageUtilsPlugin))
     // Ship Physics.
     .add_systems(Update, update_ships)
-    // Quit on `Q` press.
-    .add_systems(Update, handle_quit)
     // Wireframe
     .add_plugins(WireframePlugin::default())
-    .init_resource::<UiState>()
-    .add_systems(Update, toggle_wireframe);
-
-  // Atmosphere + daylight cycle.
-  #[cfg(feature = "atmosphere")]
-  app
-    .insert_resource(AtmosphereModel::new(Nishita {
-      sun_position: Vec3::new(0.0, 1.0, 1.0),
-      ..default()
-    }))
-    .add_plugins(AtmospherePlugin)
-    .insert_resource(CycleTimer::new(Duration::from_millis(1000), 0.2))
-    .add_systems(Update, timer_control)
-    .add_systems(Update, daylight_cycle);
-
-  #[cfg(not(feature = "atmosphere"))]
-  app.add_systems(Update, dynamic_sun);
-
+    .add_systems(Update, toggle_wireframe)
+    .add_systems(Startup, print_controls)
+    .add_systems(Update, (dynamic_scene, controls));
   app
 }
 
-#[cfg(not(feature = "atmosphere"))]
-fn dynamic_sun(suns: Query<&mut Transform, With<DirectionalLight>>, time: Res<Time>) {
-  for mut tf in suns {
-    tf.rotate_x(-time.delta_secs() * std::f32::consts::PI / 10.0);
+fn print_controls() {
+  println!("Atmosphere Example Controls:");
+  println!("    1          - Switch to lookup texture rendering method");
+  println!("    2          - Switch to raymarched rendering method");
+  println!("    Enter      - Pause/Resume sun motion");
+  println!("    Up/Down    - Increase/Decrease exposure");
+}
+
+fn controls(
+  keyboard_input: Res<ButtonInput<KeyCode>>,
+  mut exit: MessageWriter<AppExit>,
+  mut atmosphere_settings: Query<&mut AtmosphereSettings>,
+  mut game_state: ResMut<GameState>,
+  mut camera_exposure: Query<&mut Exposure, With<Camera3d>>,
+  time: Res<Time>,
+) {
+  if keyboard_input.just_pressed(KeyCode::Digit1) {
+    for mut settings in &mut atmosphere_settings {
+      settings.rendering_method = AtmosphereMode::LookupTexture;
+      println!("Switched to lookup texture rendering method");
+    }
+  }
+
+  if keyboard_input.just_pressed(KeyCode::Digit2) {
+    for mut settings in &mut atmosphere_settings {
+      settings.rendering_method = AtmosphereMode::Raymarched;
+      println!("Switched to raymarched rendering method");
+    }
+  }
+
+  if keyboard_input.just_pressed(KeyCode::Enter) {
+    game_state.paused = !game_state.paused;
+  }
+
+  if keyboard_input.pressed(KeyCode::ArrowUp) {
+    for mut exposure in &mut camera_exposure {
+      exposure.ev100 -= time.delta_secs() * 2.0;
+    }
+  }
+
+  if keyboard_input.pressed(KeyCode::ArrowDown) {
+    for mut exposure in &mut camera_exposure {
+      exposure.ev100 += time.delta_secs() * 2.0;
+    }
+  }
+
+  if keyboard_input.pressed(KeyCode::Escape) {
+    exit.write(AppExit::Success);
+  }
+}
+
+fn dynamic_scene(
+  mut suns: Query<&mut Transform, With<Sun>>,
+  time: Res<Time>,
+  sun_motion_state: Res<GameState>,
+) {
+  // Only rotate the sun if motion is not paused
+  if !sun_motion_state.paused {
+    suns
+      .iter_mut()
+      .for_each(|mut tf| tf.rotate_x(-time.delta_secs() * PI / 10.0));
   }
 }
 
@@ -118,143 +157,29 @@ pub fn main() {
   app.run();
 }
 
-pub fn handle_quit(input: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
-  if input.pressed(KeyCode::KeyQ) {
-    exit.write(AppExit::Success);
-  }
-}
-
-#[derive(Resource, Clone, Debug, Default)]
-pub struct UiState {
-  show_wireframe: bool,
-}
-
 pub fn toggle_wireframe(
   input: Res<ButtonInput<KeyCode>>,
   query: Query<Entity, With<Mesh3d>>,
   mut commands: Commands,
-  mut state: ResMut<UiState>,
+  mut show_wireframe: Local<bool>,
 ) {
   if input.just_pressed(KeyCode::KeyR) {
-    // Update flag.
-    let show_wireframe = !state.show_wireframe;
-    state.show_wireframe = show_wireframe;
-
     for entity in query.iter() {
       let mut entity = commands.entity(entity);
-      if show_wireframe {
+      if *show_wireframe {
         entity.insert(Wireframe);
       } else {
         entity.remove::<Wireframe>();
       }
     }
+    // Update flag.
+    *show_wireframe = !*show_wireframe;
   }
 }
 
 // Marker for updating the position of the light, not needed unless we have multiple lights
 #[derive(Component)]
 pub struct Sun;
-
-// Timer for updating the daylight cycle (updating the atmosphere every frame is slow, so it's better to do incremental changes)
-#[derive(Resource)]
-#[cfg(feature = "atmosphere")]
-pub struct CycleTimer {
-  update: Timer,
-  time: Stopwatch,
-  speed: f32,
-}
-
-#[cfg(feature = "atmosphere")]
-impl CycleTimer {
-  pub fn new(duration: Duration, speed: f32) -> Self {
-    Self {
-      update: Timer::new(duration, TimerMode::Repeating),
-      time: Stopwatch::new(),
-      speed,
-    }
-  }
-
-  pub fn tick(&mut self, delta: Duration) {
-    if !self.is_paused() {
-      self.update.tick(delta);
-      self.time.tick(delta.mul_f32(self.speed));
-    }
-  }
-
-  pub fn is_paused(&self) -> bool {
-    self.time.is_paused()
-  }
-
-  pub fn toggle_pause(&mut self) {
-    if self.time.is_paused() {
-      self.time.unpause();
-    } else {
-      self.time.pause();
-    }
-  }
-
-  pub fn time(&self) -> f32 {
-    self.time.elapsed().as_millis() as f32 / 2000.0
-  }
-
-  pub fn update(&self) -> bool {
-    self.update.finished()
-  }
-
-  pub fn update_speed(&mut self, delta: f32) {
-    self.speed += delta;
-    if self.speed < SPEED_MIN {
-      self.speed = SPEED_MIN;
-    }
-    if self.speed > SPEED_MAX {
-      self.speed = SPEED_MAX;
-    }
-  }
-}
-
-#[cfg(feature = "atmosphere")]
-pub fn timer_control(input: Res<ButtonInput<KeyCode>>, mut timer: ResMut<CycleTimer>) {
-  if input.just_pressed(KeyCode::KeyP) {
-    timer.toggle_pause();
-  }
-  if input.pressed(KeyCode::NumpadAdd) {
-    timer.update_speed(SPEED_DELTA);
-    eprintln!("Increase speed: {}", timer.speed);
-  }
-  if input.pressed(KeyCode::NumpadSubtract) {
-    timer.update_speed(-SPEED_DELTA);
-    eprintln!("Decrease speed: {}", timer.speed);
-  }
-}
-
-// We can edit the Atmosphere resource and it will be updated automatically
-#[cfg(feature = "atmosphere")]
-pub fn daylight_cycle(
-  mut atmosphere: AtmosphereMut<Nishita>,
-  mut query: Query<(&mut Transform, &mut DirectionalLight), With<Sun>>,
-  mut timer: ResMut<CycleTimer>,
-  time: Res<Time>,
-) {
-  // Do nothing if timer is paused.
-  if timer.is_paused() {
-    return;
-  }
-
-  timer.tick(time.delta());
-
-  if timer.update() {
-    let mut pos = atmosphere.sun_position;
-    let t = (timer.time() + 3.0) * 0.1;
-    pos.y = t.sin();
-    pos.z = t.cos();
-    atmosphere.sun_position = pos;
-
-    if let Some((mut light_trans, mut directional)) = query.single_mut().into() {
-      light_trans.rotation = Quat::from_rotation_x(-pos.y.atan2(pos.z));
-      directional.illuminance = t.sin().max(0.0).powf(2.0) * 100000.0;
-    }
-  }
-}
 
 #[derive(Component, Default, Clone)]
 #[require(Transform, Visibility)]
@@ -346,17 +271,62 @@ pub fn setup_ocean(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  // "Sun"
-  commands
-    .spawn((
-      DirectionalLight {
-        illuminance: lux::RAW_SUNLIGHT,
-        shadows_enabled: true,
-        ..default()
-      },
-      Transform::from_xyz(1.0, -0.4, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ))
-    .insert(Sun); // Marks the light as Sun
+  // Configure a properly scaled cascade shadow map for this scene (defaults are too large, mesh units are in km)
+  let cascade_shadow_config = CascadeShadowConfigBuilder {
+    first_cascade_far_bound: 0.3,
+    maximum_distance: 15.0,
+    ..default()
+  }
+  .build();
+
+  // Sun
+  commands.spawn((
+    Sun,
+    DirectionalLight {
+      shadows_enabled: true,
+      // lux::RAW_SUNLIGHT is recommended for use with this feature, since
+      // other values approximate sunlight *post-scattering* in various
+      // conditions. RAW_SUNLIGHT in comparison is the illuminance of the
+      // sun unfiltered by the atmosphere, so it is the proper input for
+      // sunlight to be filtered by the atmosphere.
+      illuminance: lux::RAW_SUNLIGHT,
+      ..default()
+    },
+    Transform::from_xyz(1.0, 0.4, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+    VolumetricLight,
+    cascade_shadow_config,
+  ));
+
+  // spawn the fog volume
+  commands.spawn((
+    FogVolume::default(),
+    Transform::from_scale(Vec3::new(10.0, 1.0, 10.0)).with_translation(Vec3::Y * 0.5),
+  ));
+
+  let sphere_mesh = meshes.add(Mesh::from(Sphere { radius: 1.0 }));
+
+  // light probe spheres
+  commands.spawn((
+    Mesh3d(sphere_mesh.clone()),
+    MeshMaterial3d(materials.add(StandardMaterial {
+      base_color: Color::WHITE,
+      metallic: 1.0,
+      perceptual_roughness: 0.0,
+      ..default()
+    })),
+    Transform::from_xyz(-1.0, 1.0, -1.0),
+  ));
+
+  commands.spawn((
+    Mesh3d(sphere_mesh.clone()),
+    MeshMaterial3d(materials.add(StandardMaterial {
+      base_color: Color::WHITE,
+      metallic: 0.0,
+      perceptual_roughness: 1.0,
+      ..default()
+    })),
+    Transform::from_xyz(-1.0, 1.0, 1.0),
+  ));
 
   // Prepare textures.
   let base_color_texture = Some(asset_server.load("textures/coast_sand_01_1k/diff.jpg"));
@@ -464,77 +434,39 @@ pub fn setup_orb(
 /// Create a simple 3D camera
 pub fn make_camera<'a>(
   commands: &'a mut Commands,
+  scattering_mediums: &mut Assets<ScatteringMedium>,
   _asset_server: &AssetServer,
 ) -> EntityCommands<'a> {
   // camera
   let mut cam = commands.spawn((
     Camera3d::default(),
-    Transform::from_xyz(-20.0, WATER_HEIGHT + 5.0, 20.0)
-      .looking_at(Vec3::new(0.0, WATER_HEIGHT, 0.0), Vec3::Y),
-    /*
-    EnvironmentMapLight {
-      diffuse_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_diffuse.ktx2"),
-      specular_map: asset_server.load("environment_maps/table_mountain_2_puresky_4k_specular.ktx2"),
-      intensity: 1.0,
+    Hdr,
+    Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
+    // Earthlike atmosphere
+    Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+    // Can be adjusted to change the scene scale and rendering quality
+    AtmosphereSettings::default(),
+    // The directional light illuminance used in this scene
+    // (the one recommended for use with this feature) is
+    // quite bright, so raising the exposure compensation helps
+    // bring the scene to a nicer brightness range.
+    Exposure { ev100: 13.0 },
+    // Tonemapper chosen just because it looked good with the scene, any
+    // tonemapper would be fine :)
+    Tonemapping::AcesFitted,
+    // Bloom gives the sun a much more natural look.
+    Bloom::NATURAL,
+    // Enables the atmosphere to drive reflections and ambient lighting (IBL) for this view
+    AtmosphereEnvironmentMapLight::default(),
+    FreeCamera::default(),
+    VolumetricFog {
+      ambient_intensity: 0.0,
       ..default()
     },
-    */
     Msaa::Off,
-    TemporalAntiAliasing::default(),
-    //*
-    DistanceFog {
-      color: Color::srgba(0.1, 0.2, 0.4, 1.0),
-      //directional_light_color: Color::srgba(1.0, 0.95, 0.75, 0.5),
-      //directional_light_exponent: 30.0,
-      falloff: FogFalloff::from_visibility_colors(
-        400.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-        Color::srgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-        Color::srgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
-      ),
-      ..default()
-    },
-    //*/
+    Fxaa::default(),
+    ScreenSpaceReflections::default(),
   ));
-
-  #[cfg(feature = "spectator")]
-  cam.insert(Spectator);
-
-  #[cfg(feature = "panorbit")]
-  cam.insert(PanOrbitCamera {
-    focus: Vec3::new(26.0, WATER_HEIGHT + 5.0, -11.0),
-    radius: Some(60.0),
-    yaw: Some(-std::f32::consts::FRAC_PI_2),
-    pitch: Some(0.0),
-    ..default()
-  });
-
-  #[cfg(feature = "atmosphere")]
-  cam.insert(AtmosphereCamera::default());
-
-  #[cfg(not(feature = "atmosphere"))]
-  {
-    use bevy::{
-      camera::Exposure,
-      core_pipeline::tonemapping::Tonemapping,
-      pbr::{Atmosphere, AtmosphereSettings},
-      post_process::bloom::Bloom,
-      render::view::Hdr,
-    };
-    cam.insert((
-      Camera { ..default() },
-      Hdr,
-      Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
-      Atmosphere::EARTH,
-      AtmosphereSettings {
-        aerial_view_lut_max_distance: 3.2e5,
-        scene_units_to_m: 1e+4,
-        ..default()
-      },
-      Exposure::SUNLIGHT,
-      Tonemapping::AcesFitted,
-      Bloom::NATURAL,
-    ));
-  }
 
   #[cfg(feature = "depth_prepass")]
   {
@@ -544,17 +476,16 @@ pub fn make_camera<'a>(
   // This is just to keep the compiler happy when not using `depth_prepass` feature.
   cam.insert(Name::new("Camera"));
 
-  info!("Move camera around by using WASD for lateral movement");
-  info!("Use Left Shift and Spacebar for vertical movement");
-  info!("Use the mouse to look around");
-  info!("Press Esc to hide or show the mouse cursor");
-
   cam
 }
 
 /// set up a simple 3D camera
-pub fn setup_camera(mut commands: Commands, asset_server: Res<AssetServer>) {
-  make_camera(&mut commands, &asset_server);
+pub fn setup_camera(
+  mut commands: Commands,
+  mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+  asset_server: Res<AssetServer>,
+) {
+  make_camera(&mut commands, &mut scattering_mediums, &asset_server);
 }
 
 /// Spawn some dutch ships.

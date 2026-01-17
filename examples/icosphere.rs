@@ -1,14 +1,12 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
+use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin};
 use bevy::color::palettes::css::OLIVE;
-use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::light::NotShadowCaster;
 use bevy::mesh::*;
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
-
-#[cfg(feature = "panorbit")]
-use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
@@ -20,16 +18,13 @@ fn main() {
 
   app.add_plugins(DefaultPlugins);
 
-  // Simple pan/orbit camera.
-  #[cfg(feature = "panorbit")]
-  app.add_plugins(PanOrbitCameraPlugin);
-
   app
     .insert_resource(WaterSettings {
       amplitude: 0.4,
       spawn_tiles: None,
       ..default()
     })
+    .add_plugins(FreeCameraPlugin)
     .add_plugins(WaterPlugin)
     // Wireframe
     .add_plugins(WireframePlugin::default())
@@ -126,21 +121,10 @@ fn setup(
   ));
 
   // camera
-  #[cfg(not(feature = "panorbit"))]
   let mut cam = commands.spawn((
     Camera3d::default(),
     Transform::from_xyz(0.0, RADIUS + 15.0, 0.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
-  ));
-  #[cfg(feature = "panorbit")]
-  let mut cam = commands.spawn((
-    Camera3dBundle { ..default() },
-    PanOrbitCamera {
-      focus: Vec3::new(0.0, 0.0, 0.0),
-      radius: Some(RADIUS + 15.0),
-      yaw: Some(3.14),
-      pitch: Some(0.0),
-      ..default()
-    },
+    FreeCamera::default(),
   ));
   #[cfg(feature = "depth_prepass")]
   {

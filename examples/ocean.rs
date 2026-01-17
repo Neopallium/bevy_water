@@ -2,8 +2,8 @@
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
 use bevy::light::NotShadowCaster;
-use bevy::prelude::*;
 use bevy::mesh::*;
+use bevy::prelude::*;
 
 mod pirates;
 use pirates::*;
@@ -26,18 +26,6 @@ fn setup_simple_ocean(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  // "Sun"
-  commands
-    .spawn((
-      DirectionalLight {
-        illuminance: 11127.65,
-        shadows_enabled: true,
-        ..default()
-      },
-      Transform::from_rotation(Quat::from_rotation_x(-0.340)),
-    ))
-    .insert(Sun); // Marks the light as Sun
-
   // Terrain material.
   let material = MeshMaterial3d(materials.add(StandardMaterial {
     base_color: Color::srgba_u8(177, 168, 132, 255),

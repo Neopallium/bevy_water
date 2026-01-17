@@ -1,13 +1,11 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
+use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin};
 use bevy::light::NotShadowCaster;
 use bevy::mesh::*;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
-
-#[cfg(feature = "atmosphere")]
-use bevy_spectator::*;
 
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
@@ -23,6 +21,7 @@ fn main() {
       spawn_tiles: None,
       ..default()
     })
+    .add_plugins(FreeCameraPlugin)
     .add_plugins(WaterPlugin)
     // Wireframe
     .add_plugins(WireframePlugin::default())
@@ -31,9 +30,6 @@ fn main() {
       Update,
       toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)),
     );
-
-  #[cfg(feature = "atmosphere")]
-  app.add_plugins(SpectatorPlugin); // Simple movement for this example
 
   app.run();
 }
@@ -102,10 +98,8 @@ fn setup(
   let mut cam = commands.spawn((
     Camera3d::default(),
     Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+    FreeCamera::default(),
   ));
-
-  #[cfg(feature = "atmosphere")]
-  cam.insert(Spectator);
 
   #[cfg(feature = "depth_prepass")]
   {

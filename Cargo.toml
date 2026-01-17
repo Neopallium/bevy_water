@@ -30,22 +30,16 @@ embed_shaders = []
 file_watcher = ["bevy/file_watcher", "bevy/embedded_watcher"]
 
 # Enable inspector in examples.
-inspector = [ "bevy-inspector-egui" ]
+inspector = ["bevy-inspector-egui"]
 
 # Enable debug lines in examples.
 debug = []
 
-# Enable bevy_atmosphere support in the examples.
+# Enable bevy atmosphere support in the examples.
 atmosphere = []
 
 # Enable Screen Space Reflections support.
 ssr = ["depth_prepass"]
-
-# Enable bevy_spectator support in the examples.
-spectator = []
-
-# Enable bevy_panorbit_camera support in the examples.
-panorbit = []
 
 # Enable DepthPrepass in examples.
 depth_prepass = []
@@ -68,4 +62,4 @@ bevy_easings = { version = "0.17.1", optional = true }
 bevy-inspector-egui = { version = "0.36", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.18.0", features = [ "3d" ] }
+bevy = { version = "0.18.0", features = ["3d", "free_camera"] }

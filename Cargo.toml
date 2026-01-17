@@ -45,7 +45,7 @@ ssr = ["depth_prepass"]
 depth_prepass = []
 
 # Include ImageUtils
-image_utils = ["bevy/jpeg"]
+image_utils = ["bevy/jpeg", "bevy/bevy_log"]
 
 # Select WebGL2 or WebGPU support.
 # Use webgl2 for native builds (non-wasm).

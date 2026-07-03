@@ -476,7 +476,7 @@ pub fn apply_wave_direction(
   water_tiles: Query<(&MeshMaterial3d<StandardWaterMaterial>, &WaveDirection)>,
 ) {
   for (material_handle, wave_dir) in water_tiles.iter() {
-    if let Some(mat) = materials.get_mut(&material_handle.0) {
+    if let Some(mut mat) = materials.get_mut(&material_handle.0) {
       mat.extension.wave_dir_a = wave_dir.dir_a();
       mat.extension.wave_dir_b = wave_dir.dir_b();
       mat.extension.wave_blend = wave_dir.blend();

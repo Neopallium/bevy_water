@@ -88,7 +88,7 @@ fn setup(
   commands.spawn((
     PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
-      shadows_enabled: true,
+      shadow_maps_enabled: true,
       ..default()
     },
     Transform::from_xyz(4.0, RADIUS + 8.0, 4.0),

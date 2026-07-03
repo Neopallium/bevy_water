@@ -4,6 +4,7 @@
 use bevy::light::NotShadowCaster;
 use bevy::mesh::*;
 use bevy::prelude::*;
+use bevy::world_serialization::WorldAssetRoot;
 
 mod pirates;
 use pirates::*;
@@ -56,7 +57,7 @@ fn setup_simple_ocean(
 /// Setup some simple ships.
 fn setup_simple_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
   // Spawn ships.
-  let scene = SceneRoot(asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0"));
+  let scene = asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0");
   let ship = Ship::new(-0.400, -3.8, 2.5, -1.4, 1.4);
 
   // "Randomly" place the ships.
@@ -66,7 +67,7 @@ fn setup_simple_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
       ship.clone(),
       Name::new(format!("Ship {x}")),
-      scene.clone(),
+      WorldAssetRoot(scene.clone()),
       Transform::from_xyz(-20.0 + (f * 7.8), 0.0, 20.0 + f2)
         .with_rotation(Quat::from_rotation_y(f)),
     ));

@@ -9,22 +9,23 @@ use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin};
 use bevy::color::palettes::css::*;
 use bevy::mesh::*;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
-use bevy::render::view::Hdr;
 use bevy::{
   anti_alias::fxaa::Fxaa,
   app::AppExit,
-  camera::Exposure,
+  camera::{Exposure, Hdr},
   core_pipeline::tonemapping::Tonemapping,
   input::keyboard::KeyCode,
   light::{
-    light_consts::lux, AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, FogVolume,
-    VolumetricFog, VolumetricLight,
+    light_consts::lux, Atmosphere, AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder,
+    FogVolume, VolumetricFog, VolumetricLight,
   },
-  pbr::{Atmosphere, AtmosphereMode, AtmosphereSettings, ScatteringMedium, ScreenSpaceReflections},
+  pbr::{AtmosphereMode, AtmosphereSettings, ScreenSpaceReflections},
   post_process::bloom::Bloom,
   prelude::*,
   render::render_resource::TextureFormat,
+  world_serialization::WorldAssetRoot,
 };
+use bevy::light::atmosphere::ScatteringMedium;
 use std::f32::consts::PI;
 
 use bevy_water::*;
@@ -283,7 +284,7 @@ pub fn setup_ocean(
   commands.spawn((
     Sun,
     DirectionalLight {
-      shadows_enabled: true,
+      shadow_maps_enabled: true,
       // lux::RAW_SUNLIGHT is recommended for use with this feature, since
       // other values approximate sunlight *post-scattering* in various
       // conditions. RAW_SUNLIGHT in comparison is the illuminance of the
@@ -434,7 +435,7 @@ pub fn setup_orb(
 /// Create a simple 3D camera
 pub fn make_camera<'a>(
   commands: &'a mut Commands,
-  scattering_mediums: &mut Assets<ScatteringMedium>,
+  mediums: &mut Assets<ScatteringMedium>,
   _asset_server: &AssetServer,
 ) -> EntityCommands<'a> {
   // camera
@@ -443,7 +444,7 @@ pub fn make_camera<'a>(
     Hdr,
     Transform::from_xyz(-1.2, 5.15, 0.0).looking_at(Vec3::Y * 5.0, Vec3::Y),
     // Earthlike atmosphere
-    Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+    Atmosphere::earth(mediums.add(ScatteringMedium::earth(256, 256))),
     // Can be adjusted to change the scene scale and rendering quality
     AtmosphereSettings::default(),
     // The directional light illuminance used in this scene
@@ -482,17 +483,16 @@ pub fn make_camera<'a>(
 /// set up a simple 3D camera
 pub fn setup_camera(
   mut commands: Commands,
-  mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+  mut mediums: ResMut<Assets<ScatteringMedium>>,
   asset_server: Res<AssetServer>,
 ) {
-  make_camera(&mut commands, &mut scattering_mediums, &asset_server);
+  make_camera(&mut commands, &mut mediums, &asset_server);
 }
 
 /// Spawn some dutch ships.
 pub fn setup_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
   // Spawn ships.
-  let scene =
-    SceneRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
+  let scene = asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0");
   let ship = Ship::new(-0.400, -8.0, 9.0, -2.0, 2.0);
 
   // "Randomly" place the ships.
@@ -508,7 +508,7 @@ pub fn setup_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
       ))
       .with_children(|parent| {
         parent.spawn((
-          scene.clone(),
+          WorldAssetRoot(scene.clone()),
           // Rotate ship model to line up with rotation axis.
           Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
         ));

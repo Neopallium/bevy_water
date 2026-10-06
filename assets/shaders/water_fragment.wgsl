@@ -23,7 +23,9 @@
 #endif
 
 #import bevy_water::water_bindings
+#ifdef VERTEX_UVS
 #import bevy_water::water_functions as water_fn
+#endif
 
 @fragment
 fn fragment(
@@ -40,20 +42,17 @@ fn fragment(
 #endif
 
   var in = p_in;
-  var world_position: vec4<f32> = in.world_position;
-  let w_pos = water_fn::uv_to_coord(in.uv);
-  // Calculate normal.
-  let height = water_fn::get_wave_height(w_pos);
+#ifdef VERTEX_UVS
+  // Flat-water tiles. Planet shell has no UVs and keeps the mesh normal:
+  // screen-space derivatives of the wave were a gray speckle on the sphere.
 #if QUALITY > 2
+  let w_pos = water_fn::uv_to_coord(in.uv);
+  let height = water_fn::get_wave_height(w_pos);
   let delta = 0.5;
   let height_dx = water_fn::get_wave_height(w_pos + vec2<f32>(delta, 0.0));
   let height_dz = water_fn::get_wave_height(w_pos + vec2<f32>(0.0, delta));
   in.world_normal = normalize(vec3<f32>(height - height_dx, delta, height - height_dz));
-#else
-  let pos = world_position.xyz + (in.world_normal * height);
-  let pos_dx = dpdx(pos);
-  let pos_dy = dpdy(pos);
-  in.world_normal = normalize(cross(pos_dy, pos_dx));
+#endif
 #endif
  
   // If we're in the crossfade section of a visibility range, conditionally
@@ -66,39 +65,39 @@ fn fragment(
   var pbr_input = pbr_input_from_standard_material(in, is_front);
 
   let deep_color = water_bindings::material.deep_color;
-  var water_color = deep_color;
+  let near_alpha = pbr_input.material.base_color.a;
+  pbr_input.material.base_color *= deep_color;
+  // Cap blue so a stale saturated deep_color does not stay electric.
+  var rgb = max(pbr_input.material.base_color.rgb, vec3<f32>(0.012, 0.05, 0.08));
+  rgb.b = min(rgb.b, 0.22);
+  // Night ocean was lifted by the sky showing through. Darker albedo.
+  rgb *= 0.65;
+  // Sky brightness is 1000, so any alpha below 1 leaves stars after tonemap.
+  // Open the shell only when an opaque surface sits within `edge_scale` meters
+  // behind it. The far plane (empty sky under the shell) stays exactly opaque.
+  var alpha = 1.0;
 #ifdef DEPTH_PREPASS
 #ifndef PREPASS_PIPELINE
 #ifndef WEBGL2
-  let water_clarity = water_bindings::material.clarity;
-  let shallow_color = water_bindings::material.shallow_color;
-  let edge_scale = water_bindings::material.edge_scale;
-  let edge_color = water_bindings::material.edge_color;
-
   let z_depth_buffer_ndc = bevy_pbr::prepass_utils::prepass_depth(in.position, 0u);
   let z_depth_buffer_view = depth_ndc_to_view_z(z_depth_buffer_ndc);
   let z_fragment_view = depth_ndc_to_view_z(in.position.z);
-  let depth_diff_view = z_fragment_view - z_depth_buffer_view;
-  let beers_law = exp(-depth_diff_view * water_clarity);
-  let depth_color = vec4<f32>(mix(deep_color.xyz, shallow_color.xyz, beers_law), 1.0 - beers_law);
-  water_color = mix(edge_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));
+  let behind = z_fragment_view - z_depth_buffer_view;
+  let reach = max(water_bindings::material.edge_scale, 0.001);
+  if (behind > 0.05 && behind < reach) {
+    alpha = mix(near_alpha, 1.0, behind / reach);
+  }
 #endif
 #endif
 #endif
-  pbr_input.material.base_color *= water_color;
-
-  //let foam_color = water_bindings::material.edge_color;
-  //let foam = mix(foam_color, depth_color, smoothstep(0.0, edge_scale, depth_diff_view));
+  pbr_input.material.base_color = vec4<f32>(rgb, alpha);
 
   // alpha discard
   pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
 #ifdef PREPASS_PIPELINE
-  // write the gbuffer, lighting pass id, and optionally normal and motion_vector textures
   let out = deferred_output(in, pbr_input);
 #else
-  // in forward mode, we calculate the lit color immediately, and then apply some post-lighting effects here.
-  // in deferred mode the lit color and these effects will be calculated in the deferred lighting shader
   var out: FragmentOutput;
   if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) == 0u {
     out.color = apply_pbr_lighting(pbr_input);
@@ -106,15 +105,8 @@ fn fragment(
     out.color = pbr_input.material.base_color;
   }
 
-  // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
-  // note this does not include fullscreen postprocessing effects like bloom.
   out.color = main_pass_post_lighting_processing(pbr_input, out.color);
-
-  // show grid
-  // 3.938... = WATER_SIZE / ((WATER_SIZE / 4) + 1)
-  //let f_pos = step(fract((w_pos / 3.9384615384615)), vec2<f32>(0.995));
-  //let grid = step(f_pos.x + f_pos.y, 1.00);
-  //out.color += vec4<f32>(grid, grid, grid, 0.00);
+  out.color.a = pbr_input.material.base_color.a;
 #endif
 
   return out;

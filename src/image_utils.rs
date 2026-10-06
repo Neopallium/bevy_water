@@ -2,7 +2,7 @@ use bevy::{
   image::ImageSampler,
   prelude::*,
   render::render_resource::{
-    AddressMode, FilterMode, SamplerDescriptor, TextureFormat, TextureViewDescriptor,
+    AddressMode, MipmapFilterMode, SamplerDescriptor, TextureFormat, TextureViewDescriptor,
     TextureViewDimension,
   },
 };
@@ -63,7 +63,7 @@ impl ImageReformat {
       address_mode_u: AddressMode::Repeat,
       address_mode_v: AddressMode::Repeat,
       address_mode_w: AddressMode::Repeat,
-      mipmap_filter: FilterMode::Linear,
+      mipmap_filter: MipmapFilterMode::Linear,
       ..default()
     };
     Self::new(commands, asset_server, name, ImageAction::Sampler(sampler))
@@ -77,7 +77,7 @@ fn reformat_image(
   mut images: ResMut<Assets<Image>>,
 ) -> Result {
   for (entity, reformat) in &query {
-    if let Some(image) = images.get_mut(&reformat.image) {
+    if let Some(mut image) = images.get_mut(&reformat.image) {
       match &reformat.action {
         ImageAction::Reformat(format) => {
           info!("Reformat {}", reformat.name);
@@ -86,9 +86,8 @@ fn reformat_image(
         ImageAction::Cubemap => {
           if image.texture_descriptor.array_layer_count() == 1 {
             info!("Reinterpret 2D image {}", reformat.name);
-            image.reinterpret_stacked_2d_as_array(
-              image.texture_descriptor.size.height / image.texture_descriptor.size.width,
-            )?;
+            let layers = image.texture_descriptor.size.height / image.texture_descriptor.size.width;
+            image.reinterpret_stacked_2d_as_array(layers)?;
             image.texture_view_descriptor = Some(TextureViewDescriptor {
               dimension: Some(TextureViewDimension::Cube),
               ..default()

@@ -23,7 +23,7 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   var model = mesh_functions::get_world_from_local(vertex.instance_index);
 #endif
 
-#ifdef VERTEX_UVS
+  // Normals are independent of UVs (upstream gated this on VERTEX_UVS by mistake).
 #ifdef SKINNED
   out.world_normal = skinning::skin_normals(model, vertex.normal);
 #else
@@ -32,14 +32,19 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 		vertex.instance_index
 	);
 #endif
-#endif
 
   let world_position = mesh_functions::mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
 
-  // Add the wave height to the world position.
+  // Wave sample coords: UV if present, else world XZ (planet water_segments.glb has no UVs).
 	var height = -0.5;
 #if QUALITY > 2
+#ifdef VERTEX_UVS
   let w_pos = water_fn::uv_to_coord(vertex.uv);
+#else
+  // coord_scale 256 on world XZ is a tight chop across the shell.
+  // 0.48 stretches the wavelength so crests stay sparse, a bit denser than 0.35.
+  let w_pos = water_fn::uv_to_coord(world_position.xz * 0.48);
+#endif
   height = water_fn::get_wave_height(w_pos);
 #endif
 

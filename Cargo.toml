@@ -19,13 +19,10 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
+default = ["webgl2", "depth_prepass", "image_utils"]
 
 # Enable Bevy Easings support.
 easings = ["bevy_easings"]
-
-# Deprecated: the shaders are always embedded now. Kept for compatibility.
-embed_shaders = []
 
 # file/embed watcher (hot-reload of the embedded shaders in `src/shaders/`)
 file_watcher = ["bevy/file_watcher", "bevy/embedded_watcher"]

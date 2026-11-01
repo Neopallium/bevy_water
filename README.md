@@ -35,7 +35,7 @@ WebGPU:
 ```sh
 RUSTFLAGS="--cfg=web_sys_unstable_apis" cargo build --release --example pirates \
  --target wasm32-unknown-unknown \
- --no-default-features --features webgpu,embed_shaders,depth_prepass
+ --no-default-features --features webgpu,depth_prepass
 
 echo "wasm-bindgen"
 wasm-bindgen --out-name pirates_webgpu \
@@ -51,7 +51,7 @@ WebGL2:
 
 ```sh
 cargo build --release --example pirates --target wasm32-unknown-unknown \
- --no-default-features --features webgl2,embed_shaders
+ --no-default-features --features webgl2
 
 echo "wasm-bindgen"
 wasm-bindgen --out-name pirates_webgl2 \

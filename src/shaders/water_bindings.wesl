@@ -1,5 +1,3 @@
-#define_import_path bevy_water::water_bindings
-
 struct WaterMaterial {
   deep_color: vec4<f32>,
   shallow_color: vec4<f32>,
@@ -14,5 +12,5 @@ struct WaterMaterial {
   wave_dir_b: vec2<f32>,
 };
 
-@group(#{MATERIAL_BIND_GROUP}) @binding(100)
+@group(constants::MATERIAL_BIND_GROUP) @binding(100)
 var<uniform> material: WaterMaterial;

@@ -108,6 +108,7 @@ fn setup(
   {
     cam.insert(DepthPrepass);
   }
+  cam.insert(Name::new("Camera"));
 
   // UI text
   commands.spawn((

@@ -88,6 +88,7 @@ basic-http-server examples/wasm
 
 ## Versions
 
+- Bevy 0.20: `bevy_water = "0.20"`
 - Bevy 0.19: `bevy_water = "0.19.1"`
 - Bevy 0.18: `bevy_water = "0.18"`
 - Bevy 0.17: `bevy_water = "0.17.2"`

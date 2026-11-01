@@ -1,5 +1,4 @@
 use bevy::{
-  asset::{load_internal_asset, uuid_handle},
   mesh::MeshVertexBufferLayoutRef,
   pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline},
   prelude::*,
@@ -104,44 +103,15 @@ impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
   }
 }
 
-pub const NOISE_FBM_HANDLE: Handle<Shader> = uuid_handle!("01968d7d-6cec-78e6-9e95-669f43d631f4");
+const WATER_VERTEX_SHADER_PATH: &str = "embedded://bevy_water/shaders/water_vertex.wesl";
+const WATER_FRAGMENT_SHADER_PATH: &str = "embedded://bevy_water/shaders/water_fragment.wesl";
 
-pub const NOISE_RANDOM_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-76a1-a5eb-5eec34b09b99");
-
-pub const NOISE_VNOISE_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-7000-b5eb-93ec377e4060");
-
-pub const WATER_BINDINGS_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-7024-a6dc-1d4843336463");
-
-pub const WATER_FUNCTIONS_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-7a6e-b944-022ae6bb4fa9");
-
-pub const WATER_VERTEX_SHADER_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-73a2-9223-08d5fedf602c");
-
-pub const WATER_FRAGMENT_SHADER_HANDLE: Handle<Shader> =
-  uuid_handle!("01968d7d-6cec-756e-9dc8-ccf5afaf5bb0");
-
-#[cfg(feature = "embed_shaders")]
 fn water_fragment_shader() -> ShaderRef {
-  WATER_FRAGMENT_SHADER_HANDLE.into()
+  WATER_FRAGMENT_SHADER_PATH.into()
 }
 
-#[cfg(not(feature = "embed_shaders"))]
-fn water_fragment_shader() -> ShaderRef {
-  "shaders/water_fragment.wgsl".into()
-}
-
-#[cfg(feature = "embed_shaders")]
 fn water_vertex_shader() -> ShaderRef {
-  WATER_VERTEX_SHADER_HANDLE.into()
-}
-
-#[cfg(not(feature = "embed_shaders"))]
-fn water_vertex_shader() -> ShaderRef {
-  "shaders/water_vertex.wgsl".into()
+  WATER_VERTEX_SHADER_PATH.into()
 }
 
 impl MaterialExtension for WaterMaterial {
@@ -171,8 +141,15 @@ impl MaterialExtension for WaterMaterial {
     _layout: &MeshVertexBufferLayoutRef,
     key: MaterialExtensionKey<Self>,
   ) -> Result<(), SpecializedMeshPipelineError> {
-    let quality = ShaderDefVal::UInt(String::from("QUALITY"), key.bind_group_data.quality);
+    let quality = ShaderDefVal::UInt("QUALITY".into(), key.bind_group_data.quality);
     if let Some(fragment) = descriptor.fragment.as_mut() {
+      // Bevy 0.20 sets `LOAD_PREPASS_NORMALS` for all materials when the view has
+      // a `NormalPrepass` (e.g. required by SSAO), not just opaque ones.  The water
+      // computes its own wave normals and isn't drawn in the normal prepass, so the
+      // loaded normals would be from the geometry behind the water.
+      fragment
+        .shader_defs
+        .retain(|def| def != &ShaderDefVal::from("LOAD_PREPASS_NORMALS"));
       fragment.shader_defs.push(quality.clone());
     }
     descriptor.vertex.shader_defs.push(quality);
@@ -185,72 +162,7 @@ pub struct WaterMaterialPlugin;
 
 impl Plugin for WaterMaterialPlugin {
   fn build(&self, app: &mut App) {
-    load_internal_asset!(
-      app,
-      NOISE_FBM_HANDLE,
-      concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shaders/noise/fbm.wgsl"),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      NOISE_RANDOM_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/noise/random.wgsl"
-      ),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      NOISE_VNOISE_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/noise/vnoise.wgsl"
-      ),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      WATER_BINDINGS_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/water_bindings.wgsl"
-      ),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      WATER_FUNCTIONS_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/water_functions.wgsl"
-      ),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      WATER_VERTEX_SHADER_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/water_vertex.wgsl"
-      ),
-      Shader::from_wgsl
-    );
-
-    load_internal_asset!(
-      app,
-      WATER_FRAGMENT_SHADER_HANDLE,
-      concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/assets/shaders/water_fragment.wgsl"
-      ),
-      Shader::from_wgsl
-    );
+    crate::shaders::load_shaders(app);
 
     app
       .add_plugins(MaterialPlugin::<StandardWaterMaterial>::default())

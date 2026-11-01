@@ -1,6 +1,8 @@
 // The `AsBindGroup` derive exceeds the default recursion limit (128) on newer Rust versions.
 #![recursion_limit = "256"]
 
+mod shaders;
+
 pub mod water;
 pub use water::*;
 

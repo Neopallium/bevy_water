@@ -1,6 +1,6 @@
 [package]
 name = "bevy_water"
-version = "0.19.1"
+version = "0.20.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <rjakabosky+neopallium@neoawareness.com>"]
 license = "MIT OR Apache-2.0"
@@ -24,10 +24,10 @@ default = ["webgl2", "embed_shaders", "depth_prepass", "image_utils"]
 # Enable Bevy Easings support.
 easings = ["bevy_easings"]
 
-# Embed the shaders at compile-time.
+# Deprecated: the shaders are always embedded now. Kept for compatibility.
 embed_shaders = []
 
-# file/embed watcher
+# file/embed watcher (hot-reload of the embedded shaders in `src/shaders/`)
 file_watcher = ["bevy/file_watcher", "bevy/embedded_watcher"]
 
 # Enable inspector in examples.
@@ -54,13 +54,13 @@ webgl2 = ["bevy/webgl2"]
 webgpu = ["bevy/webgpu"]
 
 [dependencies]
-bevy = { version = "0.19.0", default-features = false, features = [
+bevy = { version = "0.20.0", default-features = false, features = [
   "bevy_asset",
   "bevy_render",
   "bevy_pbr",
 ] }
-bevy_easings = { version = "0.19", optional = true }
-bevy-inspector-egui = { version = "0.37", optional = true }
+bevy_easings = { version = "0.20", optional = true }
+bevy-inspector-egui = { version = "0.38", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.19.0", features = ["3d", "free_camera"] }
+bevy = { version = "0.20.0", features = ["3d", "free_camera"] }

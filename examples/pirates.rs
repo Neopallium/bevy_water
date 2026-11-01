@@ -5,7 +5,7 @@
 use bevy::core_pipeline::prepass::DepthPrepass;
 
 #[cfg(not(feature = "atmosphere"))]
-use bevy::core_pipeline::Skybox;
+use bevy::light::Skybox;
 
 #[cfg(all(
   not(feature = "atmosphere"),
@@ -27,7 +27,8 @@ use bevy::{
   anti_alias::fxaa::Fxaa,
   core_pipeline::tonemapping::Tonemapping,
   light::{AtmosphereEnvironmentMapLight, VolumetricFog},
-  pbr::{Atmosphere, AtmosphereMode, AtmosphereSettings},
+  light::Atmosphere,
+  pbr::{AtmosphereMode, AtmosphereSettings},
   post_process::bloom::Bloom,
 };
 use bevy::{
@@ -35,9 +36,10 @@ use bevy::{
   camera::Exposure,
   input::{common_conditions, keyboard::KeyCode},
   light::{light_consts::lux, FogVolume, VolumetricLight},
-  pbr::ScatteringMedium,
+  light::atmosphere::ScatteringMedium,
   prelude::*,
-  render::{render_resource::TextureFormat, view::Hdr},
+  camera::Hdr,
+  render::render_resource::TextureFormat,
 };
 
 use bevy_water::*;
@@ -441,7 +443,7 @@ pub fn make_camera<'a>(
   commands.spawn((
     Sun,
     DirectionalLight {
-      shadows_enabled: true,
+      shadow_maps_enabled: true,
       illuminance: if cfg!(feature = "atmosphere") {
         // lux::RAW_SUNLIGHT is recommended for use with this feature, since
         // other values approximate sunlight *post-scattering* in various
@@ -491,9 +493,12 @@ pub fn make_camera<'a>(
 
   #[cfg(feature = "atmosphere")]
   {
+    // Earthlike atmosphere (the planet is its own entity, not part of the camera).
+    cam.commands().spawn((
+      Name::new("Atmosphere"),
+      Atmosphere::earth(_scattering_mediums.add(ScatteringMedium::default())),
+    ));
     cam.insert((
-      // Earthlike atmosphere
-      Atmosphere::earthlike(_scattering_mediums.add(ScatteringMedium::default())),
       // Can be adjusted to change the scene scale and rendering quality
       AtmosphereSettings::default(),
       // The directional light illuminance used in this scene
@@ -548,7 +553,9 @@ pub fn make_camera<'a>(
         ..default()
       },
       Skybox {
-        image: _asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
+        image: Some(
+          _asset_server.load("environment_maps/table_mountain_2_puresky_4k_cubemap.ktx2"),
+        ),
         brightness: 2000.0,
         ..default()
       },
@@ -585,7 +592,7 @@ pub fn setup_camera(
 pub fn setup_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
   // Spawn ships.
   let scene =
-    SceneRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
+    WorldAssetRoot(asset_server.load("models/dutch_ship_medium_1k/dutch_ship_medium_1k.gltf#Scene0"));
   let ship = Ship::new(-0.400, -8.0, 9.0, -2.0, 2.0);
 
   // "Randomly" place the ships.

@@ -92,7 +92,7 @@ fn setup(
   commands.spawn((
     DirectionalLight {
       illuminance: 10000.0,
-      shadows_enabled: true,
+      shadow_maps_enabled: true,
       ..default()
     },
     Transform::from_xyz(4.0, 10.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),

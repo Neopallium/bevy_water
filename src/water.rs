@@ -476,10 +476,15 @@ pub fn apply_wave_direction(
   water_tiles: Query<(&MeshMaterial3d<StandardWaterMaterial>, &WaveDirection)>,
 ) {
   for (material_handle, wave_dir) in water_tiles.iter() {
-    if let Some(mat) = materials.get_mut(&material_handle.0) {
-      mat.extension.wave_dir_a = wave_dir.dir_a();
-      mat.extension.wave_dir_b = wave_dir.dir_b();
-      mat.extension.wave_blend = wave_dir.blend();
+    if let Some(mut mat) = materials.get_mut(&material_handle.0) {
+      let (dir_a, dir_b, blend) = (wave_dir.dir_a(), wave_dir.dir_b(), wave_dir.blend());
+      let ext = &mat.extension;
+      // Only mutate when changed to avoid unnecessary `AssetEvent::Modified` events.
+      if ext.wave_dir_a != dir_a || ext.wave_dir_b != dir_b || ext.wave_blend != blend {
+        mat.extension.wave_dir_a = dir_a;
+        mat.extension.wave_dir_b = dir_b;
+        mat.extension.wave_blend = blend;
+      }
     }
   }
 }

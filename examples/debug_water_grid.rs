@@ -2,8 +2,10 @@
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
 #[cfg(feature = "debug")]
-use bevy::color::palettes::css::*;
+use bevy::{color::palettes::css::*, mesh::VertexAttributeValues};
 use bevy::prelude::*;
+#[cfg(feature = "debug")]
+use bevy_water::{material::StandardWaterMaterial, *};
 
 mod pirates;
 use pirates::*;
@@ -24,8 +26,8 @@ fn main() {
 fn debug_water_wave_grid(
   water: WaterParam,
   tiles: Query<(
-    &Handle<Mesh>,
-    &Handle<StandardWaterMaterial>,
+    &Mesh3d,
+    &MeshMaterial3d<StandardWaterMaterial>,
     &GlobalTransform,
   )>,
   meshes: Res<Assets<Mesh>>,
@@ -33,10 +35,10 @@ fn debug_water_wave_grid(
   mut gizmos: Gizmos,
 ) {
   for (mesh, tile, global) in tiles.iter() {
-    let mesh = meshes.get(mesh);
-    let tile = materials.get(tile);
+    let mesh = meshes.get(&mesh.0);
+    let tile = materials.get(&tile.0);
     match (mesh, tile) {
-      (Some(mesh), Some(tile)) => {
+      (Some(mesh), Some(_tile)) => {
         /*
         let coord_offset = tile.extension.coord_offset - Vec2::new(128.0, 128.0);
         let coord_scale = tile.extension.coord_scale;
@@ -55,8 +57,8 @@ fn debug_water_wave_grid(
               let w_pos = water.wave_point(global.transform_point(coord_pos));
               let w_pos2 = water.wave_point(global.transform_point(coord_pos2));
               let w_pos3 = water.wave_point(global.transform_point(coord_pos3));
-              lines.line_colored(w_pos, w_pos2, 0.0, Color::RED);
-              lines.line_colored(w_pos, w_pos3, 0.0, Color::GREEN);
+              gizmos.line(w_pos, w_pos2, RED);
+              gizmos.line(w_pos, w_pos3, GREEN);
             }
           }
           _ => {
@@ -81,8 +83,8 @@ fn debug_water_wave_grid(
               let w_pos = water.wave_point(global.transform_point(coord_pos));
               let w_pos2 = water.wave_point(global.transform_point(coord_pos2));
               let w_pos3 = water.wave_point(global.transform_point(coord_pos3));
-              lines.line_colored(w_pos, w_pos2, 0.0, Color::RED);
-              lines.line_colored(w_pos, w_pos3, 0.0, Color::GREEN);
+              gizmos.line(w_pos, w_pos2, RED);
+              gizmos.line(w_pos, w_pos3, GREEN);
             }
           }
           _ => {

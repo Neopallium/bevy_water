@@ -1,7 +1,7 @@
 //! Showcases dynamic ocean material + dynamic Sun/Atmosphere.
 //! Most of the daylight cycle code taken from the examples of `bevy_atmosphere`.
 
-use bevy::{anti_alias::taa::TemporalAntiAliasing, pbr::ScatteringMedium, prelude::*};
+use bevy::{anti_alias::taa::TemporalAntiAliasing, light::atmosphere::ScatteringMedium, prelude::*};
 
 mod pirates;
 use pirates::*;

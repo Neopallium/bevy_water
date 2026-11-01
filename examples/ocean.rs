@@ -56,7 +56,7 @@ fn setup_simple_ocean(
 /// Setup some simple ships.
 fn setup_simple_ships(mut commands: Commands, asset_server: Res<AssetServer>) {
   // Spawn ships.
-  let scene = SceneRoot(asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0"));
+  let scene = WorldAssetRoot(asset_server.load("models/Kenney_pirate/ship_dark.gltf#Scene0"));
   let ship = Ship::new(-0.400, -3.8, 2.5, -1.4, 1.4);
 
   // "Randomly" place the ships.

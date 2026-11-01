@@ -23,7 +23,6 @@ fn vertex(vertex: Vertex) -> VertexOutput {
   var model = mesh_functions::get_world_from_local(vertex.instance_index);
 #endif
 
-#ifdef VERTEX_UVS
 #ifdef SKINNED
   out.world_normal = skinning::skin_normals(model, vertex.normal);
 #else
@@ -32,21 +31,25 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 		vertex.instance_index
 	);
 #endif
-#endif
 
   let world_position = mesh_functions::mesh_position_local_to_world(model, vec4<f32>(vertex.position, 1.0));
 
   // Add the wave height to the world position.
 	var height = -0.5;
 #if QUALITY > 2
+#ifdef VERTEX_UVS_A
   let w_pos = water_fn::uv_to_coord(vertex.uv);
+#else
+  // Meshes without UVs: wave coords are world-space XZ (same as the water tiles).
+  let w_pos = world_position.xz;
+#endif
   height = water_fn::get_wave_height(w_pos);
 #endif
 
   out.world_position = world_position + vec4<f32>((out.world_normal * height), 0.);
   out.position = position_world_to_clip(out.world_position.xyz);
 
-#ifdef VERTEX_UVS
+#ifdef VERTEX_UVS_A
   out.uv = vertex.uv;
 #endif
 

@@ -41,7 +41,12 @@ fn fragment(
 
   var in = p_in;
   var world_position: vec4<f32> = in.world_position;
+#ifdef VERTEX_UVS_A
   let w_pos = water_fn::uv_to_coord(in.uv);
+#else
+  // Meshes without UVs: wave coords are world-space XZ (same as the water tiles).
+  let w_pos = world_position.xz;
+#endif
   // Calculate normal.
   let height = water_fn::get_wave_height(w_pos);
 #if QUALITY > 2

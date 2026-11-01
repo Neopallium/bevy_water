@@ -81,7 +81,13 @@ pub fn pirates_app(title: &str) -> App {
   app
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(GameState::default())
-    .insert_resource(GlobalAmbientLight::NONE)
+    // Faint bluish ambient light so the scene isn't completely black at night.
+    // Without the `atmosphere` feature this is replaced by the camera setup.
+    .insert_resource(GlobalAmbientLight {
+      color: Color::srgb(0.6, 0.7, 1.0),
+      brightness: 1500.0,
+      ..default()
+    })
     // Improve shadows.
     // .insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water

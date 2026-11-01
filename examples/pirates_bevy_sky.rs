@@ -64,7 +64,12 @@ pub fn pirates_app(title: &str) -> App {
   app
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(GameState::default())
-    .insert_resource(GlobalAmbientLight::NONE)
+    // Faint bluish ambient light so the scene isn't completely black at night.
+    .insert_resource(GlobalAmbientLight {
+      color: Color::srgb(0.6, 0.7, 1.0),
+      brightness: NIGHT_AMBIENT_BRIGHTNESS,
+      ..default()
+    })
     //.insert_resource(bevy::light::DirectionalLightShadowMap { size: 4 * 1024 })
     // Water
     .insert_resource(WaterSettings {
@@ -181,6 +186,9 @@ pub fn toggle_wireframe(
 // Marker for updating the position of the light, not needed unless we have multiple lights
 #[derive(Component)]
 pub struct Sun;
+
+/// Ambient light brightness, only noticeable at night.
+const NIGHT_AMBIENT_BRIGHTNESS: f32 = 1500.0;
 
 #[derive(Component, Default, Clone)]
 #[require(Transform, Visibility)]
